@@ -294,14 +294,11 @@ export function TrendChart({
           </div>
           <div className="text-center">
             <p className="text-muted-foreground">Creator Signal</p>
-            <p
-              className={`font-semibold text-lg capitalize ${getTrendColor()}`}
-            >
-              {currentTrend === "rising"
-                ? "Use Now"
-                : currentTrend === "declining"
-                  ? "Wait"
-                  : "Safe"}
+            <p className={`font-semibold text-lg ${getCreatorSignal().color}`}>
+              {getCreatorSignal().signal}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {getCreatorSignal().reasoning}
             </p>
           </div>
         </div>

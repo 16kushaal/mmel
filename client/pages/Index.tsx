@@ -280,91 +280,91 @@ export default function Index() {
                     </Button>
                   </div>
 
-                  {/* Analytics Grid */}
+                  {/* Creator Analytics Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Current Popularity */}
+                    {/* Content Boost Score */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          Current Popularity
+                          Content Boost Score
                         </span>
                       </div>
                       <div className="text-2xl font-bold text-slate-900">
                         {analysisData.track.popularity}%
                       </div>
+                      <div className="text-xs text-slate-500">
+                        Higher = Better for viral content
+                      </div>
                     </div>
 
-                    {/* All-Time Peak */}
+                    {/* Peak Viral Window */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          All-Time Peak
+                          Peak Viral Window
                         </span>
                       </div>
-                      <div className="text-2xl font-bold text-slate-900">
-                        {Math.round(
-                          analysisData.insights.peakListeners / 10000,
-                        )}
-                        %
-                      </div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-lg font-bold text-slate-900">
                         {new Date(
                           analysisData.insights.peakDate,
                         ).toLocaleDateString("en-US", {
                           month: "short",
-                          year: "numeric",
+                          day: "numeric",
                         })}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Best time to post content
                       </div>
                     </div>
 
-                    {/* Future Trend */}
+                    {/* Creator Recommendation */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Globe className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          Next Month
+                          Creator Advice
                         </span>
                       </div>
-                      <div className="text-lg font-bold capitalize">
+                      <div className="text-sm font-bold capitalize">
                         {analysisData.insights.currentTrend === "rising" ? (
-                          <span className="text-green-700">Rising</span>
+                          <span className="text-green-700">Use Now!</span>
                         ) : analysisData.insights.currentTrend ===
                           "declining" ? (
-                          <span className="text-red-700">Declining</span>
+                          <span className="text-orange-700">Wait & See</span>
                         ) : (
-                          <span className="text-yellow-700">Stable</span>
+                          <span className="text-blue-700">Safe Choice</span>
                         )}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {Math.floor(Math.random() * 20) + 75}% confidence
+                        {analysisData.insights.currentTrend === "rising"
+                          ? "Trending up - perfect timing"
+                          : analysisData.insights.currentTrend === "declining"
+                            ? "Consider alternatives"
+                            : "Consistent performance"}
                       </div>
                     </div>
 
-                    {/* Genres */}
+                    {/* Platform Match */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Music className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          Genres
+                          Best Platform
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-1">
-                        {analysisData.track.genre &&
-                        analysisData.track.genre.length > 0 ? (
-                          analysisData.track.genre.slice(0, 2).map((genre) => (
-                            <Badge
-                              key={genre}
-                              variant="outline"
-                              className="text-xs bg-slate-50"
-                            >
-                              {genre}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-slate-500">N/A</span>
-                        )}
+                      <div className="text-sm font-bold">
+                        {analysisData.track.genre?.includes("Pop") ||
+                        analysisData.track.genre?.includes("Alternative")
+                          ? "TikTok + Instagram"
+                          : analysisData.track.genre?.includes("Hip-Hop") ||
+                              analysisData.track.genre?.includes("Rap")
+                            ? "TikTok + YouTube"
+                            : "Instagram + YouTube"}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Optimal for this genre
                       </div>
                     </div>
                   </div>

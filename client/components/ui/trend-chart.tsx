@@ -82,22 +82,61 @@ export function TrendChart({
   };
 
   const getCreatorSignal = () => {
-    // Prioritize future outlook over current trend for creator decisions
-    if (
-      futureOutlook === "explosive_growth" ||
-      futureOutlook === "viral_potential"
-    ) {
-      return {
-        signal: "Use Now!",
-        color: "text-green-600",
-        reasoning: "High viral potential",
-      };
+    // Smart timing logic that considers both current trend and future outlook
+    if (futureOutlook === "explosive_growth") {
+      if (currentTrend === "rising") {
+        return {
+          signal: "Use Now!",
+          color: "text-green-600",
+          reasoning: "Perfect timing",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          signal: "Use Now",
+          color: "text-green-500",
+          reasoning: "Growth starting",
+        };
+      } else {
+        return {
+          signal: "Wait for Growth",
+          color: "text-orange-500",
+          reasoning: "Growth coming",
+        };
+      }
+    } else if (futureOutlook === "viral_potential") {
+      if (currentTrend === "rising") {
+        return {
+          signal: "Use Now!",
+          color: "text-green-600",
+          reasoning: "Viral momentum",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          signal: "Use Now",
+          color: "text-green-500",
+          reasoning: "Viral potential",
+        };
+      } else {
+        return {
+          signal: "Monitor",
+          color: "text-orange-500",
+          reasoning: "Potential but declining",
+        };
+      }
     } else if (futureOutlook === "sustained_momentum") {
-      return {
-        signal: "Use Now",
-        color: "text-green-500",
-        reasoning: "Steady growth expected",
-      };
+      if (currentTrend === "declining") {
+        return {
+          signal: "Wait & Watch",
+          color: "text-orange-500",
+          reasoning: "Momentum coming",
+        };
+      } else {
+        return {
+          signal: "Use Now",
+          color: "text-green-500",
+          reasoning: "Steady growth",
+        };
+      }
     } else if (futureOutlook === "comeback_likely") {
       return {
         signal: "Wait & Use",
@@ -111,7 +150,6 @@ export function TrendChart({
         reasoning: "Consistent performance",
       };
     } else if (futureOutlook === "steady_decline") {
-      // Even if declining future, check current trend
       if (currentTrend === "rising") {
         return {
           signal: "Use Soon",

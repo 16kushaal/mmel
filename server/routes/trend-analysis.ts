@@ -89,13 +89,51 @@ function simulateSEIR(
   startDate: Date,
   days: number,
   addNoise: boolean = true,
+  track?: MusicTrack,
 ): TrendDataPoint[] {
   const { beta, gamma, sigma = 0.1, initialInfected, totalPopulation } = params;
 
-  let S = totalPopulation - initialInfected; // Susceptible
-  let E = 0; // Exposed
-  let I = initialInfected; // Infected (active listeners)
-  let R = 0; // Recovered (lost interest)
+  // Determine song characteristics for proper initialization
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - (track?.releaseYear || currentYear);
+  const isNewSong = age <= 1;
+  const isRecentTrend = age <= 2;
+  const popularity = (track?.popularity || 50) / 100;
+
+  // Initialize compartments based on song characteristics
+  let S, E, I, R;
+
+  if (isNewSong && popularity > 0.6) {
+    // New trendy songs: High exposure and active listeners, minimal lost interest
+    I = initialInfected * 1.5; // High active listening
+    E = initialInfected * 0.8; // High exposure (people hearing about it)
+    R = Math.floor(totalPopulation * 0.01); // Very few have lost interest yet
+    S = totalPopulation - I - E - R;
+  } else if (isRecentTrend && popularity > 0.4) {
+    // Recent songs: Good activity, growing exposure
+    I = initialInfected * 1.2;
+    E = initialInfected * 0.6;
+    R = Math.floor(totalPopulation * 0.05); // Some initial churn
+    S = totalPopulation - I - E - R;
+  } else if (age > 10) {
+    // Older songs: Lower active listening, higher recovered (people who used to listen)
+    I = initialInfected * 0.7;
+    E = initialInfected * 0.3;
+    R = Math.floor(totalPopulation * 0.2); // Many have already cycled through
+    S = totalPopulation - I - E - R;
+  } else {
+    // Standard initialization for other songs
+    I = initialInfected;
+    E = Math.floor(initialInfected * 0.4);
+    R = Math.floor(totalPopulation * 0.08);
+    S = totalPopulation - I - E - R;
+  }
+
+  // Ensure values are within bounds
+  S = Math.max(0, S);
+  E = Math.max(0, E);
+  I = Math.max(1, I);
+  R = Math.max(0, R);
 
   const results: TrendDataPoint[] = [];
   const dt = 0.1; // Time step
@@ -181,28 +219,34 @@ function generateModelParameters(
   };
 
   const popularity = track.popularity / 100;
-  const age = new Date().getFullYear() - (track.releaseYear || 2020);
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - (track.releaseYear || currentYear);
   const isViral =
     track.genre?.includes("Pop") || track.genre?.includes("Alternative");
   const isClassic = age > 20;
-  const isRecent = age <= 3;
+  const isRecent = age <= 2; // More strict definition of "new"
+  const isNew = age <= 1; // Brand new songs
 
   // More varied parameters based on track characteristics
   let baseBeta, baseGamma;
 
-  // Different behavior for different song types
-  if (isClassic) {
+  // Different behavior for different song types with better new song handling
+  if (isNew) {
+    // Brand new songs: high growth potential, very low decline rate
+    baseBeta = 0.3 + popularity * 0.4 + seededRandom(trackSeed) * 0.2;
+    baseGamma = 0.01 + seededRandom(trackSeed + 1) * 0.02; // Much slower decline
+  } else if (isRecent && isViral) {
+    // Recent viral songs: high initial spread, moderate decline
+    baseBeta = 0.35 + seededRandom(trackSeed) * 0.2;
+    baseGamma = 0.04 + seededRandom(trackSeed + 1) * 0.03;
+  } else if (isClassic) {
     // Classic songs: stable, recurring popularity
     baseBeta = 0.15 + seededRandom(trackSeed) * 0.1;
-    baseGamma = 0.02 + seededRandom(trackSeed + 1) * 0.03;
-  } else if (isRecent && isViral) {
-    // Recent viral songs: high initial spread, faster decline
-    baseBeta = 0.4 + seededRandom(trackSeed) * 0.2;
-    baseGamma = 0.08 + seededRandom(trackSeed + 1) * 0.05;
+    baseGamma = 0.02 + seededRandom(trackSeed + 1) * 0.02;
   } else if (isViral) {
     // Viral songs: moderate spread, cyclical
     baseBeta = 0.25 + seededRandom(trackSeed) * 0.15;
-    baseGamma = 0.04 + seededRandom(trackSeed + 1) * 0.04;
+    baseGamma = 0.04 + seededRandom(trackSeed + 1) * 0.03;
   } else {
     // Regular songs: slower spread, steady
     baseBeta = 0.1 + seededRandom(trackSeed) * 0.08;
@@ -210,30 +254,50 @@ function generateModelParameters(
   }
 
   // Adjust for popularity
-  baseBeta *= 0.5 + popularity * 0.5;
+  baseBeta *= 0.6 + popularity * 0.4;
 
   const totalPopulation =
     5000000 + Math.floor(seededRandom(trackSeed + 2) * 5000000); // 5-10M
+
+  // Calculate initial infected based on song characteristics
+  let baseInitialInfected;
+  if (isNew && popularity > 0.6) {
+    // New trendy songs get a big boost in initial listeners
+    baseInitialInfected = popularity * 80000 + 50000; // Higher base for trending new songs
+  } else if (isRecent && popularity > 0.4) {
+    // Recent popular songs get moderate boost
+    baseInitialInfected = popularity * 60000 + 30000;
+  } else if (isClassic && popularity > 0.5) {
+    // Classic songs have steady baseline
+    baseInitialInfected = popularity * 50000 + 20000;
+  } else {
+    // Regular songs
+    baseInitialInfected = popularity * 40000 + 15000;
+  }
+
   const initialInfected = Math.floor(
-    popularity * 50000 + seededRandom(trackSeed + 3) * 50000,
-  ); // More variation
+    baseInitialInfected + seededRandom(trackSeed + 3) * 30000,
+  ); // Add some variation
 
   if (modelType === "SIS") {
     return {
-      beta: Math.max(0.001, Math.min(0.6, baseBeta)),
-      gamma: Math.max(0.005, Math.min(0.15, baseGamma)),
+      beta: Math.max(0.001, Math.min(0.7, baseBeta)),
+      gamma: Math.max(0.005, Math.min(0.12, baseGamma)),
       initialInfected,
       totalPopulation,
     };
   } else {
+    // For SEIR, adjust gamma to be lower for new songs
+    const adjustedGamma = isNew ? baseGamma * 0.5 : baseGamma;
+
     return {
-      beta: Math.max(0.001, Math.min(0.7, baseBeta * 1.1)),
-      gamma: Math.max(0.005, Math.min(0.12, baseGamma * 0.9)),
+      beta: Math.max(0.001, Math.min(0.8, baseBeta * 1.2)),
+      gamma: Math.max(0.005, Math.min(0.1, adjustedGamma * 0.8)),
       sigma: Math.max(
         0.02,
         Math.min(
-          0.25,
-          0.1 + popularity * 0.15 + seededRandom(trackSeed + 4) * 0.1,
+          0.3,
+          0.08 + popularity * 0.2 + seededRandom(trackSeed + 4) * 0.1,
         ),
       ),
       initialInfected,
@@ -522,6 +586,7 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         historicalStartDate,
         historicalDays,
         true,
+        track,
       );
     }
 
@@ -581,14 +646,25 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       // Natural volatility based on historical data
       const noiseFactor = 1 + (Math.random() - 0.5) * recentVolatility * 0.5;
 
-      // Calculate base infected count
+      // Calculate base infected count with boost for new trendy songs
       let baseInfected = currentListeners;
+
+      const age =
+        new Date().getFullYear() -
+        (track.releaseYear || new Date().getFullYear());
+      const isNewTrendySong = age <= 1 && track.popularity > 60;
 
       // Apply trend effect
       baseInfected *= 1 + currentTrendEffect * day;
 
       // Apply momentum
       baseInfected *= 1 + momentumEffect;
+
+      // Apply extra boost for new trendy songs in the near term
+      if (isNewTrendySong && day <= 21) {
+        const trendyBoost = 1.05 - day * 0.002; // Slight boost that gradually reduces
+        baseInfected *= trendyBoost;
+      }
 
       // Apply weekly pattern and noise
       const newInfected = Math.round(
@@ -622,14 +698,31 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         // Apply trends with natural decay
         const trendDecayFactor = Math.exp(-day * 0.1); // trends decay over time
 
-        // Calculate exposed following its historical trend
+        // Calculate exposed following its historical trend, with boost for new songs
         const baseExposed = lastHistorical.exposed || 0;
-        newExposed = Math.round(
-          Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
-        );
+        const age =
+          new Date().getFullYear() -
+          (track.releaseYear || new Date().getFullYear());
+        const isNewTrendySong = age <= 1 && track.popularity > 60;
 
-        // Calculate recovered following proper SEIR logic
+        if (isNewTrendySong && day <= 14) {
+          // New trendy songs maintain high exposure in near term
+          const exposureBoost = 1.1 - day * 0.005; // Gradual decay
+          newExposed = Math.round(
+            Math.max(baseExposed * 0.8, baseExposed * exposureBoost),
+          );
+        } else {
+          newExposed = Math.round(
+            Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
+          );
+        }
+
+        // Calculate recovered following proper SEIR logic with song age consideration
         const baseRecovered = lastHistorical.recovered || 0;
+        const age =
+          new Date().getFullYear() -
+          (track.releaseYear || new Date().getFullYear());
+        const isNewSong = age <= 1;
 
         // Recovered should increase when infected decreases (conservation of flow)
         const infectedChange = newInfected - lastHistorical.infected;
@@ -637,10 +730,13 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
 
         if (infectedChange < 0) {
           // If infected is decreasing, recovered should increase (people lose interest)
-          recoveredChange = Math.abs(infectedChange) * 0.7; // 70% of lost infected become recovered
+          // But for new songs, fewer people "lose interest" - they just haven't discovered it yet
+          const recoveryRate = isNewSong ? 0.3 : 0.7; // New songs retain interest better
+          recoveredChange = Math.abs(infectedChange) * recoveryRate;
         } else {
-          // If infected is increasing, recovered grows slowly
-          recoveredChange = baseRecovered * 0.02; // 2% growth per day
+          // If infected is increasing, recovered grows very slowly for new songs
+          const growthRate = isNewSong ? 0.005 : 0.02; // Much slower for new songs
+          recoveredChange = baseRecovered * growthRate;
         }
 
         newRecovered = Math.round(Math.max(0, baseRecovered + recoveredChange));

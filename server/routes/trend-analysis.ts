@@ -569,6 +569,7 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         historicalStartDate,
         historicalDays,
         true,
+        track,
       );
     }
 

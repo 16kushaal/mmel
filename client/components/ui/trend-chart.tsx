@@ -27,6 +27,13 @@ interface TrendChartProps {
   currentTrend: "rising" | "declining" | "stable";
   peakDate: string;
   peakListeners: number;
+  futureOutlook:
+    | "viral_potential"
+    | "steady_decline"
+    | "comeback_likely"
+    | "stable_niche"
+    | "explosive_growth"
+    | "sustained_momentum";
 }
 
 export function TrendChart({

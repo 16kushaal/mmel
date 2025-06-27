@@ -89,13 +89,51 @@ function simulateSEIR(
   startDate: Date,
   days: number,
   addNoise: boolean = true,
+  track?: MusicTrack,
 ): TrendDataPoint[] {
   const { beta, gamma, sigma = 0.1, initialInfected, totalPopulation } = params;
 
-  let S = totalPopulation - initialInfected; // Susceptible
-  let E = 0; // Exposed
-  let I = initialInfected; // Infected (active listeners)
-  let R = 0; // Recovered (lost interest)
+  // Determine song characteristics for proper initialization
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - (track?.releaseYear || currentYear);
+  const isNewSong = age <= 1;
+  const isRecentTrend = age <= 2;
+  const popularity = (track?.popularity || 50) / 100;
+
+  // Initialize compartments based on song characteristics
+  let S, E, I, R;
+
+  if (isNewSong && popularity > 0.6) {
+    // New trendy songs: High exposure and active listeners, minimal lost interest
+    I = initialInfected * 1.5; // High active listening
+    E = initialInfected * 0.8; // High exposure (people hearing about it)
+    R = Math.floor(totalPopulation * 0.01); // Very few have lost interest yet
+    S = totalPopulation - I - E - R;
+  } else if (isRecentTrend && popularity > 0.4) {
+    // Recent songs: Good activity, growing exposure
+    I = initialInfected * 1.2;
+    E = initialInfected * 0.6;
+    R = Math.floor(totalPopulation * 0.05); // Some initial churn
+    S = totalPopulation - I - E - R;
+  } else if (age > 10) {
+    // Older songs: Lower active listening, higher recovered (people who used to listen)
+    I = initialInfected * 0.7;
+    E = initialInfected * 0.3;
+    R = Math.floor(totalPopulation * 0.2); // Many have already cycled through
+    S = totalPopulation - I - E - R;
+  } else {
+    // Standard initialization for other songs
+    I = initialInfected;
+    E = Math.floor(initialInfected * 0.4);
+    R = Math.floor(totalPopulation * 0.08);
+    S = totalPopulation - I - E - R;
+  }
+
+  // Ensure values are within bounds
+  S = Math.max(0, S);
+  E = Math.max(0, E);
+  I = Math.max(1, I);
+  R = Math.max(0, R);
 
   const results: TrendDataPoint[] = [];
   const dt = 0.1; // Time step

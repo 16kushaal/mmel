@@ -646,14 +646,25 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       // Natural volatility based on historical data
       const noiseFactor = 1 + (Math.random() - 0.5) * recentVolatility * 0.5;
 
-      // Calculate base infected count
+      // Calculate base infected count with boost for new trendy songs
       let baseInfected = currentListeners;
+
+      const age =
+        new Date().getFullYear() -
+        (track.releaseYear || new Date().getFullYear());
+      const isNewTrendySong = age <= 1 && track.popularity > 60;
 
       // Apply trend effect
       baseInfected *= 1 + currentTrendEffect * day;
 
       // Apply momentum
       baseInfected *= 1 + momentumEffect;
+
+      // Apply extra boost for new trendy songs in the near term
+      if (isNewTrendySong && day <= 21) {
+        const trendyBoost = 1.05 - day * 0.002; // Slight boost that gradually reduces
+        baseInfected *= trendyBoost;
+      }
 
       // Apply weekly pattern and noise
       const newInfected = Math.round(

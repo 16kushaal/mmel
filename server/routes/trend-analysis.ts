@@ -242,6 +242,52 @@ function generateModelParameters(
   }
 }
 
+// Helper functions for data-driven analysis
+function calculateVolatility(data: TrendDataPoint[]): number {
+  if (data.length < 2) return 0;
+
+  const values = data.map((d) => d.infected);
+  const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+  const variance =
+    values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    values.length;
+
+  return Math.sqrt(variance) / mean; // coefficient of variation
+}
+
+function calculateWeeklyPattern(data: TrendDataPoint[]): number[] {
+  const weeklyAvg = Array(7).fill(0);
+  const weeklyCounts = Array(7).fill(0);
+
+  data.forEach((point) => {
+    const dayOfWeek = new Date(point.date).getDay();
+    weeklyAvg[dayOfWeek] += point.infected;
+    weeklyCounts[dayOfWeek]++;
+  });
+
+  // Calculate averages and normalize
+  for (let i = 0; i < 7; i++) {
+    weeklyAvg[i] = weeklyCounts[i] > 0 ? weeklyAvg[i] / weeklyCounts[i] : 1;
+  }
+
+  const overallAvg = weeklyAvg.reduce((sum, val) => sum + val, 0) / 7;
+  return weeklyAvg.map((val) => val / overallAvg); // normalize to 1.0 average
+}
+
+function calculateMomentum(data: TrendDataPoint[]): number {
+  if (data.length < 4) return 1;
+
+  const firstHalf = data.slice(0, Math.floor(data.length / 2));
+  const secondHalf = data.slice(Math.floor(data.length / 2));
+
+  const firstAvg =
+    firstHalf.reduce((sum, p) => sum + p.infected, 0) / firstHalf.length;
+  const secondAvg =
+    secondHalf.reduce((sum, p) => sum + p.infected, 0) / secondHalf.length;
+
+  return secondAvg / firstAvg; // momentum factor
+}
+
 function generateCreatorRecommendation(
   currentTrend: "rising" | "declining" | "stable",
   futureOutlook: string,

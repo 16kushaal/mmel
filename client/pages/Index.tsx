@@ -411,12 +411,11 @@ export default function Index() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-sm text-muted-foreground">
             <p className="mb-2">
-              TrendWave - Advanced music trend analysis using mathematical
-              epidemiological models
+              TrendWave - AI-powered music intelligence for content creators
             </p>
             <p>
-              Powered by SIS (Susceptible-Infected-Susceptible) and SEIR
-              (Susceptible-Exposed-Infected-Recovered) models
+              Make smarter song choices. Create viral content. Grow your
+              audience.
             </p>
           </div>
         </div>

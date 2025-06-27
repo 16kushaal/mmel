@@ -132,21 +132,21 @@ export default function Index() {
                 className="text-sm py-2 px-4 border-music-purple/30"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
-                SEIR & SIS Models
+                Content Performance
               </Badge>
               <Badge
                 variant="outline"
                 className="text-sm py-2 px-4 border-music-blue/30"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
-                Trend Predictions
+                Viral Potential
               </Badge>
               <Badge
                 variant="outline"
                 className="text-sm py-2 px-4 border-music-pink/30"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Viral Analysis
+                Audience Insights
               </Badge>
             </div>
 

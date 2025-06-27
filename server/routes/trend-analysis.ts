@@ -181,28 +181,34 @@ function generateModelParameters(
   };
 
   const popularity = track.popularity / 100;
-  const age = new Date().getFullYear() - (track.releaseYear || 2020);
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - (track.releaseYear || currentYear);
   const isViral =
     track.genre?.includes("Pop") || track.genre?.includes("Alternative");
   const isClassic = age > 20;
-  const isRecent = age <= 3;
+  const isRecent = age <= 2; // More strict definition of "new"
+  const isNew = age <= 1; // Brand new songs
 
   // More varied parameters based on track characteristics
   let baseBeta, baseGamma;
 
-  // Different behavior for different song types
-  if (isClassic) {
+  // Different behavior for different song types with better new song handling
+  if (isNew) {
+    // Brand new songs: high growth potential, very low decline rate
+    baseBeta = 0.3 + popularity * 0.4 + seededRandom(trackSeed) * 0.2;
+    baseGamma = 0.01 + seededRandom(trackSeed + 1) * 0.02; // Much slower decline
+  } else if (isRecent && isViral) {
+    // Recent viral songs: high initial spread, moderate decline
+    baseBeta = 0.35 + seededRandom(trackSeed) * 0.2;
+    baseGamma = 0.04 + seededRandom(trackSeed + 1) * 0.03;
+  } else if (isClassic) {
     // Classic songs: stable, recurring popularity
     baseBeta = 0.15 + seededRandom(trackSeed) * 0.1;
-    baseGamma = 0.02 + seededRandom(trackSeed + 1) * 0.03;
-  } else if (isRecent && isViral) {
-    // Recent viral songs: high initial spread, faster decline
-    baseBeta = 0.4 + seededRandom(trackSeed) * 0.2;
-    baseGamma = 0.08 + seededRandom(trackSeed + 1) * 0.05;
+    baseGamma = 0.02 + seededRandom(trackSeed + 1) * 0.02;
   } else if (isViral) {
     // Viral songs: moderate spread, cyclical
     baseBeta = 0.25 + seededRandom(trackSeed) * 0.15;
-    baseGamma = 0.04 + seededRandom(trackSeed + 1) * 0.04;
+    baseGamma = 0.04 + seededRandom(trackSeed + 1) * 0.03;
   } else {
     // Regular songs: slower spread, steady
     baseBeta = 0.1 + seededRandom(trackSeed) * 0.08;
@@ -210,30 +216,33 @@ function generateModelParameters(
   }
 
   // Adjust for popularity
-  baseBeta *= 0.5 + popularity * 0.5;
+  baseBeta *= 0.6 + popularity * 0.4;
 
   const totalPopulation =
     5000000 + Math.floor(seededRandom(trackSeed + 2) * 5000000); // 5-10M
   const initialInfected = Math.floor(
-    popularity * 50000 + seededRandom(trackSeed + 3) * 50000,
-  ); // More variation
+    popularity * 40000 + seededRandom(trackSeed + 3) * 60000,
+  ); // Base + variation
 
   if (modelType === "SIS") {
     return {
-      beta: Math.max(0.001, Math.min(0.6, baseBeta)),
-      gamma: Math.max(0.005, Math.min(0.15, baseGamma)),
+      beta: Math.max(0.001, Math.min(0.7, baseBeta)),
+      gamma: Math.max(0.005, Math.min(0.12, baseGamma)),
       initialInfected,
       totalPopulation,
     };
   } else {
+    // For SEIR, adjust gamma to be lower for new songs
+    const adjustedGamma = isNew ? baseGamma * 0.5 : baseGamma;
+
     return {
-      beta: Math.max(0.001, Math.min(0.7, baseBeta * 1.1)),
-      gamma: Math.max(0.005, Math.min(0.12, baseGamma * 0.9)),
+      beta: Math.max(0.001, Math.min(0.8, baseBeta * 1.2)),
+      gamma: Math.max(0.005, Math.min(0.1, adjustedGamma * 0.8)),
       sigma: Math.max(
         0.02,
         Math.min(
-          0.25,
-          0.1 + popularity * 0.15 + seededRandom(trackSeed + 4) * 0.1,
+          0.3,
+          0.08 + popularity * 0.2 + seededRandom(trackSeed + 4) * 0.1,
         ),
       ),
       initialInfected,

@@ -258,9 +258,26 @@ function generateModelParameters(
 
   const totalPopulation =
     5000000 + Math.floor(seededRandom(trackSeed + 2) * 5000000); // 5-10M
+
+  // Calculate initial infected based on song characteristics
+  let baseInitialInfected;
+  if (isNew && popularity > 0.6) {
+    // New trendy songs get a big boost in initial listeners
+    baseInitialInfected = popularity * 80000 + 50000; // Higher base for trending new songs
+  } else if (isRecent && popularity > 0.4) {
+    // Recent popular songs get moderate boost
+    baseInitialInfected = popularity * 60000 + 30000;
+  } else if (isClassic && popularity > 0.5) {
+    // Classic songs have steady baseline
+    baseInitialInfected = popularity * 50000 + 20000;
+  } else {
+    // Regular songs
+    baseInitialInfected = popularity * 40000 + 15000;
+  }
+
   const initialInfected = Math.floor(
-    popularity * 40000 + seededRandom(trackSeed + 3) * 60000,
-  ); // Base + variation
+    baseInitialInfected + seededRandom(trackSeed + 3) * 30000,
+  ); // Add some variation
 
   if (modelType === "SIS") {
     return {

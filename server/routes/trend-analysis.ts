@@ -405,7 +405,6 @@ function analyzeInsights(
   }
 
   // Generate content creator recommendations
-  const track = data[0]; // Get track info from context if available
   const creatorRecommendation = generateCreatorRecommendation(
     currentTrend,
     futureOutlook,

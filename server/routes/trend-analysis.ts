@@ -271,33 +271,48 @@ function analyzeInsights(
   const currentTrend =
     trendSlope > 50 ? "rising" : trendSlope < -50 ? "declining" : "stable";
 
-  // Analyze future predictions trend
+  // Enhanced future trend analysis
   const currentListeners = data[data.length - 1]?.infected || 0;
   const futureEnd =
     predictions[predictions.length - 1]?.infected || currentListeners;
   const futureMax = Math.max(...predictions.map((p) => p.infected));
   const futureMin = Math.min(...predictions.map((p) => p.infected));
+  const futureAverage =
+    predictions.reduce((sum, p) => sum + p.infected, 0) / predictions.length;
 
+  // Calculate trend metrics
   const growthPotential = futureMax / currentListeners;
-  const volatilityFactor = (futureMax - futureMin) / currentListeners;
+  const volatilityFactor = (futureMax - futureMin) / futureAverage;
   const endTrend = futureEnd / currentListeners;
+  const overallTrend = futureAverage / currentListeners;
+
+  // Analyze trend momentum (first vs second half of predictions)
+  const firstHalf = predictions.slice(0, Math.floor(predictions.length / 2));
+  const secondHalf = predictions.slice(Math.floor(predictions.length / 2));
+  const firstHalfAvg =
+    firstHalf.reduce((sum, p) => sum + p.infected, 0) / firstHalf.length;
+  const secondHalfAvg =
+    secondHalf.reduce((sum, p) => sum + p.infected, 0) / secondHalf.length;
+  const momentum = secondHalfAvg / firstHalfAvg;
 
   let futureOutlook:
     | "viral_potential"
     | "steady_decline"
     | "comeback_likely"
-    | "stable_niche";
+    | "stable_niche"
+    | "explosive_growth"
+    | "sustained_momentum";
 
-  // More sophisticated outlook analysis
-  if (growthPotential > 1.8 && volatilityFactor > 0.5) {
+  // Enhanced outlook analysis with more nuanced categories
+  if (growthPotential > 2.5 && volatilityFactor > 0.8) {
+    futureOutlook = "explosive_growth";
+  } else if (growthPotential > 1.6 && momentum > 1.1) {
     futureOutlook = "viral_potential";
-  } else if (endTrend < 0.7 && growthPotential < 1.2) {
+  } else if (overallTrend > 1.2 && momentum > 0.95) {
+    futureOutlook = "sustained_momentum";
+  } else if (endTrend < 0.8 && momentum < 0.9 && growthPotential < 1.1) {
     futureOutlook = "steady_decline";
-  } else if (
-    modelType === "SIS" &&
-    volatilityFactor > 0.3 &&
-    futureMax > currentListeners * 1.3
-  ) {
+  } else if (volatilityFactor > 0.4 && futureMax > currentListeners * 1.4) {
     futureOutlook = "comeback_likely";
   } else {
     futureOutlook = "stable_niche";

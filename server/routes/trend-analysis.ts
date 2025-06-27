@@ -479,28 +479,33 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       );
     }
 
-    // Generate highly varied and realistic future predictions
+    // Generate data-driven future predictions based on historical patterns
     let predictions: TrendDataPoint[] = [];
 
-    // Create unique prediction characteristics based on song
-    const trackSeed = (track.title + track.artist).split("").reduce((a, b) => {
-      a = (a << 5) - a + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-
-    const seededRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
-    };
-
-    // Get current baseline from historical data
+    // Analyze historical data trends
+    const recentDays = 14; // Analyze last 2 weeks
+    const recentData = historicalData.slice(-recentDays);
     const currentListeners =
       historicalData[historicalData.length - 1]?.infected ||
       parameters.initialInfected;
-    const historicalTrend = historicalData.slice(-7);
+
+    // Calculate trend metrics from actual data
+    const trendSlope =
+      recentData.length > 1
+        ? (recentData[recentData.length - 1].infected -
+            recentData[0].infected) /
+          recentData.length
+        : 0;
+
     const recentAverage =
-      historicalTrend.reduce((sum, point) => sum + point.infected, 0) /
-      historicalTrend.length;
+      recentData.reduce((sum, point) => sum + point.infected, 0) /
+      recentData.length;
+    const recentVolatility = calculateVolatility(recentData);
+    const weeklyPattern = calculateWeeklyPattern(historicalData);
+
+    // Determine natural trajectory based on actual data
+    const naturalGrowthRate = trendSlope / recentAverage; // percentage change per day
+    const momentumFactor = calculateMomentum(recentData);
 
     // Determine song-specific prediction characteristics
     const popularity = track.popularity / 100;

@@ -379,6 +379,7 @@ export default function Index() {
                 currentTrend={analysisData.insights.currentTrend}
                 peakDate={analysisData.insights.peakDate}
                 peakListeners={analysisData.insights.peakListeners}
+                futureOutlook={analysisData.insights.futureOutlook}
               />
 
               {/* Model Parameters and Insights */}

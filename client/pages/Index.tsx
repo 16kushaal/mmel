@@ -374,15 +374,20 @@ export default function Index() {
                         </span>
                       </div>
                       <div className="text-lg font-bold text-slate-900">
-                        {new Date(
-                          analysisData.insights.peakDate,
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {(() => {
+                          const upcomingPeak = getUpcomingPeak(
+                            analysisData.predictions,
+                          );
+                          return new Date(
+                            upcomingPeak.peakDate,
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        })()}
                       </div>
                       <div className="text-xs text-slate-500">
-                        Best time to post content
+                        Predicted peak engagement
                       </div>
                     </div>
 

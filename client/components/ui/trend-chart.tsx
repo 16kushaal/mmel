@@ -43,6 +43,7 @@ export function TrendChart({
   currentTrend,
   peakDate,
   peakListeners,
+  futureOutlook,
 }: TrendChartProps) {
   const combinedData = [...data, ...predictions];
   const currentDate = new Date().toISOString().split("T")[0];

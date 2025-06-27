@@ -187,10 +187,10 @@ export default function Index() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-music-purple/10 mx-auto mb-4">
                     <Zap className="h-6 w-6 text-music-purple" />
                   </div>
-                  <h3 className="font-semibold mb-2">Mathematical Models</h3>
+                  <h3 className="font-semibold mb-2">Boost Your Content</h3>
                   <p className="text-sm text-muted-foreground">
-                    Advanced SIS and SEIR epidemiological models adapted for
-                    music trend analysis
+                    Choose songs that will maximize your content's reach and
+                    engagement across social platforms
                   </p>
                 </Card>
 
@@ -198,10 +198,10 @@ export default function Index() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-music-blue/10 mx-auto mb-4">
                     <TrendingUp className="h-6 w-6 text-music-blue" />
                   </div>
-                  <h3 className="font-semibold mb-2">Trend Predictions</h3>
+                  <h3 className="font-semibold mb-2">Viral Timing</h3>
                   <p className="text-sm text-muted-foreground">
-                    Forecast future popularity trends and identify viral
-                    potential
+                    Know when a song will peak to time your content perfectly
+                    for maximum viral potential
                   </p>
                 </Card>
 
@@ -209,9 +209,10 @@ export default function Index() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-music-pink/10 mx-auto mb-4">
                     <Globe className="h-6 w-6 text-music-pink" />
                   </div>
-                  <h3 className="font-semibold mb-2">Global Insights</h3>
+                  <h3 className="font-semibold mb-2">Creator Intelligence</h3>
                   <p className="text-sm text-muted-foreground">
-                    Understand audience behavior and market penetration patterns
+                    Get data-driven recommendations tailored for TikTok,
+                    Instagram, YouTube, and other platforms
                   </p>
                 </Card>
               </div>

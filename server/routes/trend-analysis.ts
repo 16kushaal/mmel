@@ -605,19 +605,28 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       } else {
         // SEIR model - follow historical trends for each compartment
         const lastHistorical = historicalData[historicalData.length - 1];
-        const prevHistorical = historicalData[historicalData.length - 2] || lastHistorical;
+        const prevHistorical =
+          historicalData[historicalData.length - 2] || lastHistorical;
 
         // Calculate historical trends for each compartment
-        const susceptibleTrend = (lastHistorical.susceptible - prevHistorical.susceptible) / Math.max(prevHistorical.susceptible, 1);
-        const exposedTrend = ((lastHistorical.exposed || 0) - (prevHistorical.exposed || 0)) / Math.max(prevHistorical.exposed || 1, 1);
-        const recoveredTrend = ((lastHistorical.recovered || 0) - (prevHistorical.recovered || 0)) / Math.max(prevHistorical.recovered || 1, 1);
+        const susceptibleTrend =
+          (lastHistorical.susceptible - prevHistorical.susceptible) /
+          Math.max(prevHistorical.susceptible, 1);
+        const exposedTrend =
+          ((lastHistorical.exposed || 0) - (prevHistorical.exposed || 0)) /
+          Math.max(prevHistorical.exposed || 1, 1);
+        const recoveredTrend =
+          ((lastHistorical.recovered || 0) - (prevHistorical.recovered || 0)) /
+          Math.max(prevHistorical.recovered || 1, 1);
 
         // Apply trends with natural decay
         const trendDecayFactor = Math.exp(-day * 0.1); // trends decay over time
 
         // Calculate exposed following its historical trend
         const baseExposed = lastHistorical.exposed || 0;
-        newExposed = Math.round(Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)));
+        newExposed = Math.round(
+          Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
+        );
 
         // Calculate recovered following proper SEIR logic
         const baseRecovered = lastHistorical.recovered || 0;
@@ -638,20 +647,23 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
 
         // Calculate susceptible to maintain population conservation
         // S + E + I + R = Total Population
-        newSusceptible = Math.round(parameters.totalPopulation - newExposed - newInfected - newRecovered);
+        newSusceptible = Math.round(
+          parameters.totalPopulation - newExposed - newInfected - newRecovered,
+        );
         newSusceptible = Math.max(0, newSusceptible); // Can't be negative
 
         // If susceptible would be too low, adjust recovered downward
-        if (newSusceptible < parameters.totalPopulation * 0.1) { // Minimum 10% susceptible
-          const adjustment = (parameters.totalPopulation * 0.1) - newSusceptible;
+        if (newSusceptible < parameters.totalPopulation * 0.1) {
+          // Minimum 10% susceptible
+          const adjustment = parameters.totalPopulation * 0.1 - newSusceptible;
           newRecovered = Math.max(0, newRecovered - adjustment);
-          newSusceptible = Math.round(parameters.totalPopulation - newExposed - newInfected - newRecovered);
+          newSusceptible = Math.round(
+            parameters.totalPopulation -
+              newExposed -
+              newInfected -
+              newRecovered,
+          );
         }
-      }
-        const totalAccounted = newInfected + newExposed + newRecovered;
-        newSusceptible = Math.round(
-          parameters.totalPopulation - totalAccounted,
-        );
       }
 
       predictions.push({

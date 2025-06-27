@@ -74,6 +74,8 @@ export interface TrendAnalysisResponse {
       | "viral_potential"
       | "steady_decline"
       | "comeback_likely"
-      | "stable_niche";
+      | "stable_niche"
+      | "explosive_growth"
+      | "sustained_momentum";
   };
 }

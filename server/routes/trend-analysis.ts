@@ -318,11 +318,22 @@ function analyzeInsights(
     futureOutlook = "stable_niche";
   }
 
+  // Generate content creator recommendations
+  const track = data[0]; // Get track info from context if available
+  const creatorRecommendation = generateCreatorRecommendation(
+    currentTrend,
+    futureOutlook,
+    growthPotential,
+    momentum,
+    track?.genre,
+  );
+
   return {
     peakDate,
     peakListeners,
     currentTrend,
     futureOutlook,
+    creatorRecommendation,
   };
 }
 

@@ -637,8 +637,12 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
           Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
         );
 
-        // Calculate recovered following proper SEIR logic
+        // Calculate recovered following proper SEIR logic with song age consideration
         const baseRecovered = lastHistorical.recovered || 0;
+        const age =
+          new Date().getFullYear() -
+          (track.releaseYear || new Date().getFullYear());
+        const isNewSong = age <= 1;
 
         // Recovered should increase when infected decreases (conservation of flow)
         const infectedChange = newInfected - lastHistorical.infected;
@@ -646,10 +650,13 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
 
         if (infectedChange < 0) {
           // If infected is decreasing, recovered should increase (people lose interest)
-          recoveredChange = Math.abs(infectedChange) * 0.7; // 70% of lost infected become recovered
+          // But for new songs, fewer people "lose interest" - they just haven't discovered it yet
+          const recoveryRate = isNewSong ? 0.3 : 0.7; // New songs retain interest better
+          recoveredChange = Math.abs(infectedChange) * recoveryRate;
         } else {
-          // If infected is increasing, recovered grows slowly
-          recoveredChange = baseRecovered * 0.02; // 2% growth per day
+          // If infected is increasing, recovered grows very slowly for new songs
+          const growthRate = isNewSong ? 0.005 : 0.02; // Much slower for new songs
+          recoveredChange = baseRecovered * growthRate;
         }
 
         newRecovered = Math.round(Math.max(0, baseRecovered + recoveredChange));

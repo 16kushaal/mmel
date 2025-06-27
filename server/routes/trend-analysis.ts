@@ -595,7 +595,7 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         baseInfected * weeklyMultiplier * noiseFactor,
       );
 
-      // Calculate other compartments based on model type
+      // Calculate other compartments following proper SEIR flow and historical trends
       let newSusceptible, newExposed, newRecovered;
 
       if (modelType === "SIS") {
@@ -603,21 +603,51 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         newExposed = undefined;
         newRecovered = undefined;
       } else {
-        // SEIR model with realistic distributions
-        const currentInfectedRatio = newInfected / parameters.totalPopulation;
+        // SEIR model - follow historical trends for each compartment
+        const lastHistorical = historicalData[historicalData.length - 1];
+        const prevHistorical = historicalData[historicalData.length - 2] || lastHistorical;
 
-        // Exposed: proportional to how viral the trend is
-        const exposureRate = Math.min(
-          0.4,
-          0.1 + Math.abs(naturalGrowthRate) * 5,
-        );
-        newExposed = Math.round(newInfected * exposureRate);
+        // Calculate historical trends for each compartment
+        const susceptibleTrend = (lastHistorical.susceptible - prevHistorical.susceptible) / Math.max(prevHistorical.susceptible, 1);
+        const exposedTrend = ((lastHistorical.exposed || 0) - (prevHistorical.exposed || 0)) / Math.max(prevHistorical.exposed || 1, 1);
+        const recoveredTrend = ((lastHistorical.recovered || 0) - (prevHistorical.recovered || 0)) / Math.max(prevHistorical.recovered || 1, 1);
 
-        // Recovered: grows over time but slower for trending content
-        const recoveryRate = naturalGrowthRate > 0 ? 0.3 : 0.6; // slower recovery for growing trends
-        newRecovered = Math.round(newInfected * recoveryRate * dayProgress);
+        // Apply trends with natural decay
+        const trendDecayFactor = Math.exp(-day * 0.1); // trends decay over time
 
-        // Susceptible: remaining population
+        // Calculate exposed following its historical trend
+        const baseExposed = lastHistorical.exposed || 0;
+        newExposed = Math.round(Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)));
+
+        // Calculate recovered following proper SEIR logic
+        const baseRecovered = lastHistorical.recovered || 0;
+
+        // Recovered should increase when infected decreases (conservation of flow)
+        const infectedChange = newInfected - lastHistorical.infected;
+        let recoveredChange = 0;
+
+        if (infectedChange < 0) {
+          // If infected is decreasing, recovered should increase (people lose interest)
+          recoveredChange = Math.abs(infectedChange) * 0.7; // 70% of lost infected become recovered
+        } else {
+          // If infected is increasing, recovered grows slowly
+          recoveredChange = baseRecovered * 0.02; // 2% growth per day
+        }
+
+        newRecovered = Math.round(Math.max(0, baseRecovered + recoveredChange));
+
+        // Calculate susceptible to maintain population conservation
+        // S + E + I + R = Total Population
+        newSusceptible = Math.round(parameters.totalPopulation - newExposed - newInfected - newRecovered);
+        newSusceptible = Math.max(0, newSusceptible); // Can't be negative
+
+        // If susceptible would be too low, adjust recovered downward
+        if (newSusceptible < parameters.totalPopulation * 0.1) { // Minimum 10% susceptible
+          const adjustment = (parameters.totalPopulation * 0.1) - newSusceptible;
+          newRecovered = Math.max(0, newRecovered - adjustment);
+          newSusceptible = Math.round(parameters.totalPopulation - newExposed - newInfected - newRecovered);
+        }
+      }
         const totalAccounted = newInfected + newExposed + newRecovered;
         newSusceptible = Math.round(
           parameters.totalPopulation - totalAccounted,

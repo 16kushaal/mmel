@@ -687,11 +687,24 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         // Apply trends with natural decay
         const trendDecayFactor = Math.exp(-day * 0.1); // trends decay over time
 
-        // Calculate exposed following its historical trend
+        // Calculate exposed following its historical trend, with boost for new songs
         const baseExposed = lastHistorical.exposed || 0;
-        newExposed = Math.round(
-          Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
-        );
+        const age =
+          new Date().getFullYear() -
+          (track.releaseYear || new Date().getFullYear());
+        const isNewTrendySong = age <= 1 && track.popularity > 60;
+
+        if (isNewTrendySong && day <= 14) {
+          // New trendy songs maintain high exposure in near term
+          const exposureBoost = 1.1 - day * 0.005; // Gradual decay
+          newExposed = Math.round(
+            Math.max(baseExposed * 0.8, baseExposed * exposureBoost),
+          );
+        } else {
+          newExposed = Math.round(
+            Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
+          );
+        }
 
         // Calculate recovered following proper SEIR logic with song age consideration
         const baseRecovered = lastHistorical.recovered || 0;

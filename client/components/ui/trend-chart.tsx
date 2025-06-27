@@ -198,29 +198,33 @@ export function TrendChart({
 
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div className="text-center">
-            <p className="text-muted-foreground">Current Listeners</p>
+            <p className="text-muted-foreground">Active Audience</p>
             <p className="font-semibold text-lg text-blue-600">
               {formatNumber(data[data.length - 1]?.infected || 0)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-muted-foreground">Peak Listeners</p>
+            <p className="text-muted-foreground">Viral Peak</p>
             <p className="font-semibold text-lg">
               {formatNumber(peakListeners)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-muted-foreground">Market Potential</p>
+            <p className="text-muted-foreground">Total Reach</p>
             <p className="font-semibold text-lg text-slate-600">
               {formatNumber(data[0]?.totalPopulation || 0)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-muted-foreground">Trend Status</p>
+            <p className="text-muted-foreground">Creator Signal</p>
             <p
               className={`font-semibold text-lg capitalize ${getTrendColor()}`}
             >
-              {currentTrend}
+              {currentTrend === "rising"
+                ? "Use Now"
+                : currentTrend === "declining"
+                  ? "Wait"
+                  : "Safe"}
             </p>
           </div>
         </div>

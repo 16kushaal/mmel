@@ -246,9 +246,11 @@ function generateModelParameters(
 function calculateVolatility(data: TrendDataPoint[]): number {
   if (data.length < 2) return 0;
 
-  const values = data.map(d => d.infected);
+  const values = data.map((d) => d.infected);
   const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-  const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+  const variance =
+    values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    values.length;
 
   return Math.sqrt(variance) / mean; // coefficient of variation
 }
@@ -257,7 +259,7 @@ function calculateWeeklyPattern(data: TrendDataPoint[]): number[] {
   const weeklyAvg = Array(7).fill(0);
   const weeklyCounts = Array(7).fill(0);
 
-  data.forEach(point => {
+  data.forEach((point) => {
     const dayOfWeek = new Date(point.date).getDay();
     weeklyAvg[dayOfWeek] += point.infected;
     weeklyCounts[dayOfWeek]++;
@@ -269,7 +271,7 @@ function calculateWeeklyPattern(data: TrendDataPoint[]): number[] {
   }
 
   const overallAvg = weeklyAvg.reduce((sum, val) => sum + val, 0) / 7;
-  return weeklyAvg.map(val => val / overallAvg); // normalize to 1.0 average
+  return weeklyAvg.map((val) => val / overallAvg); // normalize to 1.0 average
 }
 
 function calculateMomentum(data: TrendDataPoint[]): number {
@@ -278,8 +280,10 @@ function calculateMomentum(data: TrendDataPoint[]): number {
   const firstHalf = data.slice(0, Math.floor(data.length / 2));
   const secondHalf = data.slice(Math.floor(data.length / 2));
 
-  const firstAvg = firstHalf.reduce((sum, p) => sum + p.infected, 0) / firstHalf.length;
-  const secondAvg = secondHalf.reduce((sum, p) => sum + p.infected, 0) / secondHalf.length;
+  const firstAvg =
+    firstHalf.reduce((sum, p) => sum + p.infected, 0) / firstHalf.length;
+  const secondAvg =
+    secondHalf.reduce((sum, p) => sum + p.infected, 0) / secondHalf.length;
 
   return secondAvg / firstAvg; // momentum factor
 }
@@ -289,7 +293,7 @@ function generateCreatorRecommendation(
   futureOutlook: string,
   growthPotential: number,
   momentum: number,
-  genres?: string[]
+  genres?: string[],
 ) {
   let action: "use_now" | "wait_and_see" | "safe_choice" | "avoid";
   let timing: "perfect" | "good" | "okay" | "poor";
@@ -527,14 +531,21 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
     // Analyze historical data trends
     const recentDays = 14; // Analyze last 2 weeks
     const recentData = historicalData.slice(-recentDays);
-    const currentListeners = historicalData[historicalData.length - 1]?.infected || parameters.initialInfected;
+    const currentListeners =
+      historicalData[historicalData.length - 1]?.infected ||
+      parameters.initialInfected;
 
     // Calculate trend metrics from actual data
-    const trendSlope = recentData.length > 1
-      ? (recentData[recentData.length - 1].infected - recentData[0].infected) / recentData.length
-      : 0;
+    const trendSlope =
+      recentData.length > 1
+        ? (recentData[recentData.length - 1].infected -
+            recentData[0].infected) /
+          recentData.length
+        : 0;
 
-    const recentAverage = recentData.reduce((sum, point) => sum + point.infected, 0) / recentData.length;
+    const recentAverage =
+      recentData.reduce((sum, point) => sum + point.infected, 0) /
+      recentData.length;
     const recentVolatility = calculateVolatility(recentData);
     const weeklyPattern = calculateWeeklyPattern(historicalData);
 
@@ -546,7 +557,9 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
     predictions = [];
 
     console.log(`Generating data-driven predictions for ${track.title}`);
-    console.log(`Current trend: slope=${trendSlope.toFixed(2)}, growth=${(naturalGrowthRate * 100).toFixed(2)}% per day`);
+    console.log(
+      `Current trend: slope=${trendSlope.toFixed(2)}, growth=${(naturalGrowthRate * 100).toFixed(2)}% per day`,
+    );
 
     for (let day = 1; day <= predictionDays; day++) {
       const futureDate = new Date(currentDate);
@@ -562,7 +575,8 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       const weeklyMultiplier = weeklyPattern[dayOfWeek] || 1;
 
       // Add momentum effects
-      const momentumEffect = (momentumFactor - 1) * Math.exp(-dayProgress * 0.8);
+      const momentumEffect =
+        (momentumFactor - 1) * Math.exp(-dayProgress * 0.8);
 
       // Natural volatility based on historical data
       const noiseFactor = 1 + (Math.random() - 0.5) * recentVolatility * 0.5;
@@ -571,13 +585,15 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       let baseInfected = currentListeners;
 
       // Apply trend effect
-      baseInfected *= (1 + currentTrendEffect * day);
+      baseInfected *= 1 + currentTrendEffect * day;
 
       // Apply momentum
-      baseInfected *= (1 + momentumEffect);
+      baseInfected *= 1 + momentumEffect;
 
       // Apply weekly pattern and noise
-      const newInfected = Math.round(baseInfected * weeklyMultiplier * noiseFactor);
+      const newInfected = Math.round(
+        baseInfected * weeklyMultiplier * noiseFactor,
+      );
 
       // Calculate other compartments based on model type
       let newSusceptible, newExposed, newRecovered;
@@ -591,7 +607,10 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         const currentInfectedRatio = newInfected / parameters.totalPopulation;
 
         // Exposed: proportional to how viral the trend is
-        const exposureRate = Math.min(0.4, 0.1 + Math.abs(naturalGrowthRate) * 5);
+        const exposureRate = Math.min(
+          0.4,
+          0.1 + Math.abs(naturalGrowthRate) * 5,
+        );
         newExposed = Math.round(newInfected * exposureRate);
 
         // Recovered: grows over time but slower for trending content
@@ -600,7 +619,9 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
 
         // Susceptible: remaining population
         const totalAccounted = newInfected + newExposed + newRecovered;
-        newSusceptible = Math.round(parameters.totalPopulation - totalAccounted);
+        newSusceptible = Math.round(
+          parameters.totalPopulation - totalAccounted,
+        );
       }
 
       predictions.push({
@@ -613,67 +634,48 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       });
     }
 
-        // Exposed population varies based on viral potential and current trends
-        const exposureRate =
-          0.2 + (popularity / 100) * 0.3 + (trendDirection > 0.9 ? 0.2 : 0);
-        newExposed = Math.round(
-          newInfected * exposureRate * (1 - dayProgress * 0.3),
-        );
-
-        // Recovered population grows more slowly for viral/trending content
-        const recoverySlowdown =
-          selectedScenario.includes("viral") ||
-          selectedScenario.includes("surge")
-            ? 0.7
-            : 1;
-        const baseRecovered = Math.round(
-          newInfected * (0.5 + dayProgress * 1.5) * recoverySlowdown,
-        );
-        newRecovered = Math.max(0, baseRecovered);
-
-        // Adjust susceptible population
-        const totalKnown = newInfected + (newExposed || 0) + newRecovered;
-        newSusceptible = Math.round(parameters.totalPopulation - totalKnown);
-      }
-
-      predictions.push({
-        date: futureDate.toISOString().split("T")[0],
-        susceptible: Math.max(0, newSusceptible),
-        exposed: newExposed,
-        infected: Math.max(1, newInfected),
-        recovered: newRecovered,
-        totalPopulation: parameters.totalPopulation,
-      });
-    }
-
-    // Enhanced smoothing that preserves intentional patterns while preventing unrealistic jumps
+    // Simple smoothing to prevent unrealistic day-to-day jumps
     for (let i = 1; i < predictions.length; i++) {
       const prev = predictions[i - 1].infected;
       const curr = predictions[i].infected;
 
-      // Dynamic max change based on current trend and scenario
-      let maxChangePercent = 0.25; // Base 25% max change
-
-      // Allow larger changes for viral scenarios
-      if (
-        selectedScenario.includes("viral") ||
-        selectedScenario.includes("surge")
-      ) {
-        maxChangePercent = 0.4; // 40% for viral content
-      } else if (
-        selectedScenario.includes("growth") ||
-        selectedScenario.includes("boost")
-      ) {
-        maxChangePercent = 0.3; // 30% for growth scenarios
-      }
-
+      // Limit to 20% max change per day based on data trends
+      const maxChangePercent = 0.2;
       const maxChange = prev * maxChangePercent;
 
-      // Only limit extremely unrealistic jumps
+      // Only smooth extreme jumps that don't match data patterns
       if (Math.abs(curr - prev) > maxChange) {
-        // Preserve direction but limit magnitude
         const direction = curr > prev ? 1 : -1;
         predictions[i].infected = Math.round(prev + maxChange * direction);
+
+        // Recalculate other compartments after smoothing
+        const smoothedInfected = predictions[i].infected;
+
+        if (modelType === "SIS") {
+          predictions[i].susceptible = Math.round(
+            parameters.totalPopulation - smoothedInfected,
+          );
+        } else {
+          const dayProgress = i / predictionDays;
+          const exposureRate = Math.min(
+            0.4,
+            0.1 + Math.abs(naturalGrowthRate) * 5,
+          );
+          const recoveryRate = naturalGrowthRate > 0 ? 0.3 : 0.6;
+
+          predictions[i].exposed = Math.round(smoothedInfected * exposureRate);
+          predictions[i].recovered = Math.round(
+            smoothedInfected * recoveryRate * dayProgress,
+          );
+
+          const totalAccounted =
+            smoothedInfected +
+            (predictions[i].exposed || 0) +
+            (predictions[i].recovered || 0);
+          predictions[i].susceptible = Math.round(
+            parameters.totalPopulation - totalAccounted,
+          );
+        }
       }
     }
 

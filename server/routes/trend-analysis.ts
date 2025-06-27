@@ -242,6 +242,91 @@ function generateModelParameters(
   }
 }
 
+function generateCreatorRecommendation(
+  currentTrend: "rising" | "declining" | "stable",
+  futureOutlook: string,
+  growthPotential: number,
+  momentum: number,
+  genres?: string[],
+) {
+  let action: "use_now" | "wait_and_see" | "safe_choice" | "avoid";
+  let timing: "perfect" | "good" | "okay" | "poor";
+  let confidence: number;
+  let platforms: string[] = [];
+
+  // Determine optimal platforms based on genre
+  if (genres) {
+    if (
+      genres.includes("Pop") ||
+      genres.includes("Alternative") ||
+      genres.includes("Electronic")
+    ) {
+      platforms = ["TikTok", "Instagram Reels", "YouTube Shorts"];
+    } else if (genres.includes("Hip-Hop") || genres.includes("Rap")) {
+      platforms = ["TikTok", "YouTube", "Instagram"];
+    } else if (genres.includes("Rock") || genres.includes("Indie")) {
+      platforms = ["YouTube", "Instagram", "TikTok"];
+    } else if (genres.includes("R&B") || genres.includes("Soul")) {
+      platforms = ["Instagram", "TikTok", "YouTube"];
+    } else {
+      platforms = ["Instagram", "YouTube", "TikTok"];
+    }
+  } else {
+    platforms = ["TikTok", "Instagram", "YouTube"];
+  }
+
+  // Determine action and timing based on trends and outlook
+  if (
+    currentTrend === "rising" &&
+    (futureOutlook === "viral_potential" ||
+      futureOutlook === "explosive_growth")
+  ) {
+    action = "use_now";
+    timing = "perfect";
+    confidence = 90 + Math.floor(Math.random() * 10);
+  } else if (
+    currentTrend === "rising" &&
+    futureOutlook === "sustained_momentum"
+  ) {
+    action = "use_now";
+    timing = "perfect";
+    confidence = 85 + Math.floor(Math.random() * 10);
+  } else if (currentTrend === "stable" && growthPotential > 1.3) {
+    action = "use_now";
+    timing = "good";
+    confidence = 75 + Math.floor(Math.random() * 15);
+  } else if (
+    currentTrend === "declining" &&
+    futureOutlook === "comeback_likely"
+  ) {
+    action = "wait_and_see";
+    timing = "okay";
+    confidence = 60 + Math.floor(Math.random() * 20);
+  } else if (currentTrend === "stable" && futureOutlook === "stable_niche") {
+    action = "safe_choice";
+    timing = "good";
+    confidence = 70 + Math.floor(Math.random() * 15);
+  } else if (
+    currentTrend === "declining" &&
+    futureOutlook === "steady_decline"
+  ) {
+    action = "wait_and_see";
+    timing = "poor";
+    confidence = 40 + Math.floor(Math.random() * 20);
+  } else {
+    action = "safe_choice";
+    timing = "okay";
+    confidence = 65 + Math.floor(Math.random() * 20);
+  }
+
+  return {
+    action,
+    timing,
+    platforms,
+    confidence,
+  };
+}
+
 function analyzeInsights(
   data: TrendDataPoint[],
   predictions: TrendDataPoint[],

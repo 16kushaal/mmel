@@ -853,7 +853,12 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
     predictions = predictions.slice(1);
 
     // Analyze insights
-    const insights = analyzeInsights(historicalData, predictions, modelType);
+    const insights = analyzeInsights(
+      historicalData,
+      predictions,
+      modelType,
+      track,
+    );
 
     const response: TrendAnalysisResponse = {
       track,

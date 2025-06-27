@@ -121,8 +121,9 @@ export default function Index() {
             </div>
 
             <p className="text-xl md:text-2xl text-black mb-8 leading-relaxed">
-              Analyze the past, present, and future of music trends. Discover
-              any song's viral potential using advanced mathematical models.
+              Choose the perfect soundtrack for viral content. Discover which
+              songs will boost your engagement and reach using AI-powered trend
+              analysis.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4 mb-12">

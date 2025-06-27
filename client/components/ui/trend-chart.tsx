@@ -81,6 +81,75 @@ export function TrendChart({
     }
   };
 
+  const getCreatorSignal = () => {
+    // Prioritize future outlook over current trend for creator decisions
+    if (
+      futureOutlook === "explosive_growth" ||
+      futureOutlook === "viral_potential"
+    ) {
+      return {
+        signal: "Use Now!",
+        color: "text-green-600",
+        reasoning: "High viral potential",
+      };
+    } else if (futureOutlook === "sustained_momentum") {
+      return {
+        signal: "Use Now",
+        color: "text-green-500",
+        reasoning: "Steady growth expected",
+      };
+    } else if (futureOutlook === "comeback_likely") {
+      return {
+        signal: "Wait & Use",
+        color: "text-orange-500",
+        reasoning: "Comeback predicted",
+      };
+    } else if (futureOutlook === "stable_niche") {
+      return {
+        signal: "Safe Choice",
+        color: "text-blue-500",
+        reasoning: "Consistent performance",
+      };
+    } else if (futureOutlook === "steady_decline") {
+      // Even if declining future, check current trend
+      if (currentTrend === "rising") {
+        return {
+          signal: "Use Soon",
+          color: "text-orange-600",
+          reasoning: "Act before decline",
+        };
+      } else {
+        return {
+          signal: "Consider Alt",
+          color: "text-red-500",
+          reasoning: "Declining trend",
+        };
+      }
+    } else {
+      // Fallback to current trend analysis
+      switch (currentTrend) {
+        case "rising":
+          return {
+            signal: "Use Now",
+            color: "text-green-500",
+            reasoning: "Currently trending",
+          };
+        case "declining":
+          return {
+            signal: "Wait",
+            color: "text-red-500",
+            reasoning: "Currently declining",
+          };
+        default:
+          return {
+            signal: "Safe",
+            color: "text-blue-500",
+            reasoning: "Stable choice",
+          };
+      }
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const isHistorical = new Date(label) <= new Date(currentDate);

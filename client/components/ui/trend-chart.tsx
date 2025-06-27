@@ -105,11 +105,8 @@ export function TrendChart({
               {getTrendIcon()}
             </CardTitle>
             <CardDescription>
-              Music trend analysis using{" "}
-              {modelType === "SIS"
-                ? "Susceptible-Infected-Susceptible"
-                : "Susceptible-Exposed-Infected-Recovered"}{" "}
-              epidemiological model
+              Content creator intelligence: Track audience engagement patterns
+              and predict optimal timing for maximum viral potential
             </CardDescription>
           </div>
           <div className="text-right">

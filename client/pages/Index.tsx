@@ -32,21 +32,61 @@ export default function Index() {
 
   // Helper function for consistent creator advice across components
   const getCreatorAdvice = (currentTrend: string, futureOutlook: string) => {
-    if (
-      futureOutlook === "explosive_growth" ||
-      futureOutlook === "viral_potential"
-    ) {
-      return {
-        action: "Use Now!",
-        color: "text-green-700",
-        reasoning: "High viral potential ahead",
-      };
+    // For explosive growth and viral potential, consider current trend timing
+    if (futureOutlook === "explosive_growth") {
+      if (currentTrend === "rising") {
+        return {
+          action: "Use Now!",
+          color: "text-green-700",
+          reasoning: "Perfect timing - explosive growth starting",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          action: "Use Now",
+          color: "text-green-600",
+          reasoning: "Explosive growth predicted",
+        };
+      } else {
+        return {
+          action: "Wait for Growth",
+          color: "text-orange-600",
+          reasoning: "Explosive growth coming - wait for upturn",
+        };
+      }
+    } else if (futureOutlook === "viral_potential") {
+      if (currentTrend === "rising") {
+        return {
+          action: "Use Now!",
+          color: "text-green-700",
+          reasoning: "Trending up with viral potential",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          action: "Use Now",
+          color: "text-green-600",
+          reasoning: "Viral potential detected",
+        };
+      } else {
+        return {
+          action: "Monitor Closely",
+          color: "text-orange-600",
+          reasoning: "Viral potential but declining now",
+        };
+      }
     } else if (futureOutlook === "sustained_momentum") {
-      return {
-        action: "Use Now",
-        color: "text-green-600",
-        reasoning: "Steady growth expected",
-      };
+      if (currentTrend === "declining") {
+        return {
+          action: "Wait & Watch",
+          color: "text-orange-600",
+          reasoning: "Momentum coming - wait for upturn",
+        };
+      } else {
+        return {
+          action: "Use Now",
+          color: "text-green-600",
+          reasoning: "Steady growth expected",
+        };
+      }
     } else if (futureOutlook === "comeback_likely") {
       return {
         action: "Wait & Use",

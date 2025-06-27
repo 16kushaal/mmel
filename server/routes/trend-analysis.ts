@@ -242,10 +242,142 @@ function generateModelParameters(
   }
 }
 
+// Helper functions for data-driven analysis
+function calculateVolatility(data: TrendDataPoint[]): number {
+  if (data.length < 2) return 0;
+
+  const values = data.map((d) => d.infected);
+  const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+  const variance =
+    values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    values.length;
+
+  return Math.sqrt(variance) / mean; // coefficient of variation
+}
+
+function calculateWeeklyPattern(data: TrendDataPoint[]): number[] {
+  const weeklyAvg = Array(7).fill(0);
+  const weeklyCounts = Array(7).fill(0);
+
+  data.forEach((point) => {
+    const dayOfWeek = new Date(point.date).getDay();
+    weeklyAvg[dayOfWeek] += point.infected;
+    weeklyCounts[dayOfWeek]++;
+  });
+
+  // Calculate averages and normalize
+  for (let i = 0; i < 7; i++) {
+    weeklyAvg[i] = weeklyCounts[i] > 0 ? weeklyAvg[i] / weeklyCounts[i] : 1;
+  }
+
+  const overallAvg = weeklyAvg.reduce((sum, val) => sum + val, 0) / 7;
+  return weeklyAvg.map((val) => val / overallAvg); // normalize to 1.0 average
+}
+
+function calculateMomentum(data: TrendDataPoint[]): number {
+  if (data.length < 4) return 1;
+
+  const firstHalf = data.slice(0, Math.floor(data.length / 2));
+  const secondHalf = data.slice(Math.floor(data.length / 2));
+
+  const firstAvg =
+    firstHalf.reduce((sum, p) => sum + p.infected, 0) / firstHalf.length;
+  const secondAvg =
+    secondHalf.reduce((sum, p) => sum + p.infected, 0) / secondHalf.length;
+
+  return secondAvg / firstAvg; // momentum factor
+}
+
+function generateCreatorRecommendation(
+  currentTrend: "rising" | "declining" | "stable",
+  futureOutlook: string,
+  growthPotential: number,
+  momentum: number,
+  genres?: string[],
+) {
+  let action: "use_now" | "wait_and_see" | "safe_choice" | "avoid";
+  let timing: "perfect" | "good" | "okay" | "poor";
+  let confidence: number;
+  let platforms: string[] = [];
+
+  // Determine optimal platforms based on genre
+  if (genres) {
+    if (
+      genres.includes("Pop") ||
+      genres.includes("Alternative") ||
+      genres.includes("Electronic")
+    ) {
+      platforms = ["TikTok", "Instagram Reels", "YouTube Shorts"];
+    } else if (genres.includes("Hip-Hop") || genres.includes("Rap")) {
+      platforms = ["TikTok", "YouTube", "Instagram"];
+    } else if (genres.includes("Rock") || genres.includes("Indie")) {
+      platforms = ["YouTube", "Instagram", "TikTok"];
+    } else if (genres.includes("R&B") || genres.includes("Soul")) {
+      platforms = ["Instagram", "TikTok", "YouTube"];
+    } else {
+      platforms = ["Instagram", "YouTube", "TikTok"];
+    }
+  } else {
+    platforms = ["TikTok", "Instagram", "YouTube"];
+  }
+
+  // Determine action and timing based on trends and outlook
+  if (
+    currentTrend === "rising" &&
+    (futureOutlook === "viral_potential" ||
+      futureOutlook === "explosive_growth")
+  ) {
+    action = "use_now";
+    timing = "perfect";
+    confidence = 90 + Math.floor(Math.random() * 10);
+  } else if (
+    currentTrend === "rising" &&
+    futureOutlook === "sustained_momentum"
+  ) {
+    action = "use_now";
+    timing = "perfect";
+    confidence = 85 + Math.floor(Math.random() * 10);
+  } else if (currentTrend === "stable" && growthPotential > 1.3) {
+    action = "use_now";
+    timing = "good";
+    confidence = 75 + Math.floor(Math.random() * 15);
+  } else if (
+    currentTrend === "declining" &&
+    futureOutlook === "comeback_likely"
+  ) {
+    action = "wait_and_see";
+    timing = "okay";
+    confidence = 60 + Math.floor(Math.random() * 20);
+  } else if (currentTrend === "stable" && futureOutlook === "stable_niche") {
+    action = "safe_choice";
+    timing = "good";
+    confidence = 70 + Math.floor(Math.random() * 15);
+  } else if (
+    currentTrend === "declining" &&
+    futureOutlook === "steady_decline"
+  ) {
+    action = "wait_and_see";
+    timing = "poor";
+    confidence = 40 + Math.floor(Math.random() * 20);
+  } else {
+    action = "safe_choice";
+    timing = "okay";
+    confidence = 65 + Math.floor(Math.random() * 20);
+  }
+
+  return {
+    action,
+    timing,
+    platforms,
+    confidence,
+  };
+}
+
 function analyzeInsights(
   data: TrendDataPoint[],
   predictions: TrendDataPoint[],
   modelType: "SIS" | "SEIR",
+  track?: MusicTrack,
 ) {
   const allData = [...data, ...predictions];
 
@@ -271,43 +403,68 @@ function analyzeInsights(
   const currentTrend =
     trendSlope > 50 ? "rising" : trendSlope < -50 ? "declining" : "stable";
 
-  // Analyze future predictions trend
+  // Enhanced future trend analysis
   const currentListeners = data[data.length - 1]?.infected || 0;
   const futureEnd =
     predictions[predictions.length - 1]?.infected || currentListeners;
   const futureMax = Math.max(...predictions.map((p) => p.infected));
   const futureMin = Math.min(...predictions.map((p) => p.infected));
+  const futureAverage =
+    predictions.reduce((sum, p) => sum + p.infected, 0) / predictions.length;
 
+  // Calculate trend metrics
   const growthPotential = futureMax / currentListeners;
-  const volatilityFactor = (futureMax - futureMin) / currentListeners;
+  const volatilityFactor = (futureMax - futureMin) / futureAverage;
   const endTrend = futureEnd / currentListeners;
+  const overallTrend = futureAverage / currentListeners;
+
+  // Analyze trend momentum (first vs second half of predictions)
+  const firstHalf = predictions.slice(0, Math.floor(predictions.length / 2));
+  const secondHalf = predictions.slice(Math.floor(predictions.length / 2));
+  const firstHalfAvg =
+    firstHalf.reduce((sum, p) => sum + p.infected, 0) / firstHalf.length;
+  const secondHalfAvg =
+    secondHalf.reduce((sum, p) => sum + p.infected, 0) / secondHalf.length;
+  const momentum = secondHalfAvg / firstHalfAvg;
 
   let futureOutlook:
     | "viral_potential"
     | "steady_decline"
     | "comeback_likely"
-    | "stable_niche";
+    | "stable_niche"
+    | "explosive_growth"
+    | "sustained_momentum";
 
-  // More sophisticated outlook analysis
-  if (growthPotential > 1.8 && volatilityFactor > 0.5) {
+  // Enhanced outlook analysis with more nuanced categories
+  if (growthPotential > 2.5 && volatilityFactor > 0.8) {
+    futureOutlook = "explosive_growth";
+  } else if (growthPotential > 1.6 && momentum > 1.1) {
     futureOutlook = "viral_potential";
-  } else if (endTrend < 0.7 && growthPotential < 1.2) {
+  } else if (overallTrend > 1.2 && momentum > 0.95) {
+    futureOutlook = "sustained_momentum";
+  } else if (endTrend < 0.8 && momentum < 0.9 && growthPotential < 1.1) {
     futureOutlook = "steady_decline";
-  } else if (
-    modelType === "SIS" &&
-    volatilityFactor > 0.3 &&
-    futureMax > currentListeners * 1.3
-  ) {
+  } else if (volatilityFactor > 0.4 && futureMax > currentListeners * 1.4) {
     futureOutlook = "comeback_likely";
   } else {
     futureOutlook = "stable_niche";
   }
+
+  // Generate content creator recommendations
+  const creatorRecommendation = generateCreatorRecommendation(
+    currentTrend,
+    futureOutlook,
+    growthPotential,
+    momentum,
+    track?.genre,
+  );
 
   return {
     peakDate,
     peakListeners,
     currentTrend,
     futureOutlook,
+    creatorRecommendation,
   };
 }
 
@@ -368,149 +525,77 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       );
     }
 
-    // Generate highly varied and realistic future predictions
+    // Generate data-driven future predictions based on historical patterns
     let predictions: TrendDataPoint[] = [];
 
-    // Create unique prediction characteristics based on song
-    const trackSeed = (track.title + track.artist).split("").reduce((a, b) => {
-      a = (a << 5) - a + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-
-    const seededRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
-    };
-
-    // Get current baseline from historical data
+    // Analyze historical data trends
+    const recentDays = 14; // Analyze last 2 weeks
+    const recentData = historicalData.slice(-recentDays);
     const currentListeners =
       historicalData[historicalData.length - 1]?.infected ||
       parameters.initialInfected;
-    const historicalTrend = historicalData.slice(-7);
+
+    // Calculate trend metrics from actual data
+    const trendSlope =
+      recentData.length > 1
+        ? (recentData[recentData.length - 1].infected -
+            recentData[0].infected) /
+          recentData.length
+        : 0;
+
     const recentAverage =
-      historicalTrend.reduce((sum, point) => sum + point.infected, 0) /
-      historicalTrend.length;
+      recentData.reduce((sum, point) => sum + point.infected, 0) /
+      recentData.length;
+    const recentVolatility = calculateVolatility(recentData);
+    const weeklyPattern = calculateWeeklyPattern(historicalData);
 
-    // Determine song-specific prediction characteristics
-    const popularity = track.popularity / 100;
-    const age = new Date().getFullYear() - (track.releaseYear || 2020);
-    const isViral =
-      track.genre?.includes("Pop") || track.genre?.includes("Alternative");
-    const isClassic = age > 20;
-    const isRecent = age <= 3;
+    // Determine natural trajectory based on actual data
+    const naturalGrowthRate = trendSlope / recentAverage; // percentage change per day
+    const momentumFactor = calculateMomentum(recentData);
 
-    // Generate multiple prediction scenarios based on song type
-    const scenarios = [
-      "viral_explosion",
-      "steady_decline",
-      "cyclical_resurgence",
-      "plateau_stability",
-      "gradual_growth",
-      "volatile_swings",
-      "weekend_warrior",
-      "seasonal_boost",
-    ];
-
-    const scenarioIndex = Math.floor(
-      seededRandom(trackSeed) * scenarios.length,
-    );
-    const selectedScenario = scenarios[scenarioIndex];
-
-    // Create prediction data points manually for maximum control
+    // Data-driven prediction generation
     predictions = [];
+
+    console.log(`Generating data-driven predictions for ${track.title}`);
+    console.log(
+      `Current trend: slope=${trendSlope.toFixed(2)}, growth=${(naturalGrowthRate * 100).toFixed(2)}% per day`,
+    );
 
     for (let day = 1; day <= predictionDays; day++) {
       const futureDate = new Date(currentDate);
       futureDate.setDate(futureDate.getDate() + day);
 
+      // Calculate trend continuation with natural decay
       const dayProgress = day / predictionDays;
-      const weekPhase = (day % 7) / 7;
-      const randomSeed = trackSeed + day * 7;
-      const dailyRandom = seededRandom(randomSeed);
-      const noiseFactor = 0.92 + dailyRandom * 0.16; // ±8% daily variation (reduced from ±20%)
+      const trendDecay = Math.exp(-dayProgress * 0.5); // trends naturally decay over time
+      const currentTrendEffect = naturalGrowthRate * trendDecay;
 
-      let baseMultiplier = 1;
-      let volatilityMultiplier = 1;
+      // Apply weekly pattern
+      const dayOfWeek = futureDate.getDay();
+      const weeklyMultiplier = weeklyPattern[dayOfWeek] || 1;
 
-      // Apply scenario-specific patterns (reduced intensity)
-      switch (selectedScenario) {
-        case "viral_explosion":
-          baseMultiplier = 1 + dayProgress * 1.8 * Math.exp(-dayProgress * 1.5); // Reduced from 2.5
-          volatilityMultiplier = 1.15; // Reduced from 1.4
-          break;
+      // Add momentum effects
+      const momentumEffect =
+        (momentumFactor - 1) * Math.exp(-dayProgress * 0.8);
 
-        case "steady_decline":
-          baseMultiplier =
-            1 - dayProgress * 0.4 - Math.sin(dayProgress * 4 * Math.PI) * 0.06; // Reduced
-          volatilityMultiplier = 1.08; // Reduced from 1.2
-          break;
+      // Natural volatility based on historical data
+      const noiseFactor = 1 + (Math.random() - 0.5) * recentVolatility * 0.5;
 
-        case "cyclical_resurgence":
-          baseMultiplier =
-            1 +
-            Math.sin(dayProgress * 3 * Math.PI + Math.PI) * 0.25 +
-            dayProgress * 0.15; // Reduced
-          volatilityMultiplier = 1.12; // Reduced from 1.3
-          break;
+      // Calculate base infected count
+      let baseInfected = currentListeners;
 
-        case "plateau_stability":
-          baseMultiplier = 1 + Math.sin(dayProgress * 8 * Math.PI) * 0.08; // Reduced
-          volatilityMultiplier = 1.05; // Reduced from 1.1
-          break;
+      // Apply trend effect
+      baseInfected *= 1 + currentTrendEffect * day;
 
-        case "gradual_growth":
-          baseMultiplier =
-            1 + dayProgress * 0.5 + Math.sin(dayProgress * 6 * Math.PI) * 0.06; // Reduced
-          volatilityMultiplier = 1.08; // Reduced from 1.2
-          break;
+      // Apply momentum
+      baseInfected *= 1 + momentumEffect;
 
-        case "volatile_swings":
-          baseMultiplier =
-            1 +
-            Math.sin(dayProgress * 12 * Math.PI + dailyRandom * 2 * Math.PI) *
-              0.25; // Reduced from 0.5
-          volatilityMultiplier = 1.2; // Reduced from 1.6
-          break;
-
-        case "weekend_warrior":
-          const isWeekend =
-            futureDate.getDay() === 0 || futureDate.getDay() === 6;
-          baseMultiplier = 1 + (isWeekend ? 0.2 : -0.1) + dayProgress * 0.08; // Reduced
-          volatilityMultiplier = 1.1; // Reduced from 1.3
-          break;
-
-        case "seasonal_boost":
-          baseMultiplier =
-            1 + Math.sin(dayProgress * 2 * Math.PI) * 0.18 + dayProgress * 0.1; // Reduced
-          volatilityMultiplier = 1.08; // Reduced from 1.25
-          break;
-      }
-
-      // Add genre-specific modifiers (reduced impact)
-      if (isViral) {
-        volatilityMultiplier *= 1.08; // Reduced from 1.2
-      }
-      if (isClassic) {
-        baseMultiplier = (baseMultiplier + 1) / 2; // More stable
-        volatilityMultiplier *= 0.9; // Reduced from 0.8
-      }
-      if (isRecent && popularity > 80) {
-        volatilityMultiplier *= 1.15; // Reduced from 1.4
-      }
-
-      // Weekend/weekday patterns (reduced impact)
-      const weekendBoost = weekPhase < 0.286 || weekPhase > 0.714 ? 1.08 : 0.98; // Reduced from 1.15/0.95
-
-      // Calculate final infected count
+      // Apply weekly pattern and noise
       const newInfected = Math.round(
-        recentAverage *
-          baseMultiplier *
-          volatilityMultiplier *
-          noiseFactor *
-          weekendBoost,
+        baseInfected * weeklyMultiplier * noiseFactor,
       );
 
-      // Calculate other compartments based on model type and infected count
+      // Calculate other compartments following proper SEIR flow and historical trends
       let newSusceptible, newExposed, newRecovered;
 
       if (modelType === "SIS") {
@@ -518,15 +603,67 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
         newExposed = undefined;
         newRecovered = undefined;
       } else {
-        // SEIR model
-        const totalAccounted = newInfected * (2 + dayProgress); // More recovered over time
+        // SEIR model - follow historical trends for each compartment
+        const lastHistorical = historicalData[historicalData.length - 1];
+        const prevHistorical =
+          historicalData[historicalData.length - 2] || lastHistorical;
+
+        // Calculate historical trends for each compartment
+        const susceptibleTrend =
+          (lastHistorical.susceptible - prevHistorical.susceptible) /
+          Math.max(prevHistorical.susceptible, 1);
+        const exposedTrend =
+          ((lastHistorical.exposed || 0) - (prevHistorical.exposed || 0)) /
+          Math.max(prevHistorical.exposed || 1, 1);
+        const recoveredTrend =
+          ((lastHistorical.recovered || 0) - (prevHistorical.recovered || 0)) /
+          Math.max(prevHistorical.recovered || 1, 1);
+
+        // Apply trends with natural decay
+        const trendDecayFactor = Math.exp(-day * 0.1); // trends decay over time
+
+        // Calculate exposed following its historical trend
+        const baseExposed = lastHistorical.exposed || 0;
+        newExposed = Math.round(
+          Math.max(0, baseExposed * (1 + exposedTrend * trendDecayFactor)),
+        );
+
+        // Calculate recovered following proper SEIR logic
+        const baseRecovered = lastHistorical.recovered || 0;
+
+        // Recovered should increase when infected decreases (conservation of flow)
+        const infectedChange = newInfected - lastHistorical.infected;
+        let recoveredChange = 0;
+
+        if (infectedChange < 0) {
+          // If infected is decreasing, recovered should increase (people lose interest)
+          recoveredChange = Math.abs(infectedChange) * 0.7; // 70% of lost infected become recovered
+        } else {
+          // If infected is increasing, recovered grows slowly
+          recoveredChange = baseRecovered * 0.02; // 2% growth per day
+        }
+
+        newRecovered = Math.round(Math.max(0, baseRecovered + recoveredChange));
+
+        // Calculate susceptible to maintain population conservation
+        // S + E + I + R = Total Population
         newSusceptible = Math.round(
-          parameters.totalPopulation - totalAccounted,
+          parameters.totalPopulation - newExposed - newInfected - newRecovered,
         );
-        newExposed = Math.round(newInfected * 0.3 * (1 - dayProgress)); // Decreasing exposure over time
-        newRecovered = Math.round(
-          totalAccounted - newInfected - (newExposed || 0),
-        );
+        newSusceptible = Math.max(0, newSusceptible); // Can't be negative
+
+        // If susceptible would be too low, adjust recovered downward
+        if (newSusceptible < parameters.totalPopulation * 0.1) {
+          // Minimum 10% susceptible
+          const adjustment = parameters.totalPopulation * 0.1 - newSusceptible;
+          newRecovered = Math.max(0, newRecovered - adjustment);
+          newSusceptible = Math.round(
+            parameters.totalPopulation -
+              newExposed -
+              newInfected -
+              newRecovered,
+          );
+        }
       }
 
       predictions.push({
@@ -539,31 +676,77 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       });
     }
 
-    // Apply smoothing to prevent extreme day-to-day jumps
+    // Simple smoothing to prevent unrealistic day-to-day jumps
     for (let i = 1; i < predictions.length; i++) {
       const prev = predictions[i - 1].infected;
       const curr = predictions[i].infected;
-      const maxChange = prev * 0.18; // Maximum 18% change per day (reduced from 40%)
 
+      // Limit to 20% max change per day based on data trends
+      const maxChangePercent = 0.2;
+      const maxChange = prev * maxChangePercent;
+
+      // Only smooth extreme jumps that don't match data patterns
       if (Math.abs(curr - prev) > maxChange) {
-        if (curr > prev) {
-          predictions[i].infected = Math.round(prev + maxChange);
+        const direction = curr > prev ? 1 : -1;
+        predictions[i].infected = Math.round(prev + maxChange * direction);
+
+        // Recalculate other compartments after smoothing to maintain SEIR flow
+        const smoothedInfected = predictions[i].infected;
+        const originalInfected = curr;
+        const infectedDiff = smoothedInfected - originalInfected;
+
+        if (modelType === "SIS") {
+          predictions[i].susceptible = Math.round(
+            parameters.totalPopulation - smoothedInfected,
+          );
         } else {
-          predictions[i].infected = Math.round(prev - maxChange);
+          // Adjust other compartments proportionally to maintain conservation
+          const originalExposed = predictions[i].exposed || 0;
+          const originalRecovered = predictions[i].recovered || 0;
+
+          // If we reduced infected, add the difference to recovered (people lost interest)
+          if (infectedDiff < 0) {
+            predictions[i].recovered = Math.round(
+              originalRecovered + Math.abs(infectedDiff) * 0.7,
+            );
+            predictions[i].exposed = Math.round(originalExposed * 0.9); // slight reduction in exposed
+          } else {
+            // If we increased infected, it came from exposed
+            predictions[i].exposed = Math.round(
+              Math.max(0, originalExposed - infectedDiff * 0.5),
+            );
+            predictions[i].recovered = originalRecovered; // keep recovered same
+          }
+
+          // Recalculate susceptible to maintain total population
+          const totalAccounted =
+            smoothedInfected +
+            (predictions[i].exposed || 0) +
+            (predictions[i].recovered || 0);
+          predictions[i].susceptible = Math.round(
+            parameters.totalPopulation - totalAccounted,
+          );
         }
       }
     }
 
-    // Add gentle smoothing to reduce excessive spikes while preserving character
+    // Preserve pattern integrity - only smooth extreme outliers
     for (let i = 2; i < predictions.length - 1; i++) {
       const prev = predictions[i - 1].infected;
       const curr = predictions[i].infected;
       const next = predictions[i + 1].infected;
-      const average = (prev + curr + next) / 3;
 
-      // Only smooth if current value is an extreme outlier
-      if (Math.abs(curr - average) > average * 0.25) {
-        predictions[i].infected = Math.round(curr * 0.7 + average * 0.3);
+      // Calculate local trend
+      const localTrend = (next - prev) / 2;
+      const expectedValue = prev + localTrend;
+
+      // Only smooth if the current value is a severe outlier (>50% off expected)
+      if (
+        Math.abs(curr - expectedValue) > expectedValue * 0.5 &&
+        expectedValue > 0
+      ) {
+        // Light smoothing that preserves 80% of original character
+        predictions[i].infected = Math.round(curr * 0.8 + expectedValue * 0.2);
       }
     }
 
@@ -571,7 +754,12 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
     predictions = predictions.slice(1);
 
     // Analyze insights
-    const insights = analyzeInsights(historicalData, predictions, modelType);
+    const insights = analyzeInsights(
+      historicalData,
+      predictions,
+      modelType,
+      track,
+    );
 
     const response: TrendAnalysisResponse = {
       track,

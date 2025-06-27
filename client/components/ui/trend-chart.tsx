@@ -27,6 +27,13 @@ interface TrendChartProps {
   currentTrend: "rising" | "declining" | "stable";
   peakDate: string;
   peakListeners: number;
+  futureOutlook:
+    | "viral_potential"
+    | "steady_decline"
+    | "comeback_likely"
+    | "stable_niche"
+    | "explosive_growth"
+    | "sustained_momentum";
 }
 
 export function TrendChart({
@@ -36,6 +43,7 @@ export function TrendChart({
   currentTrend,
   peakDate,
   peakListeners,
+  futureOutlook,
 }: TrendChartProps) {
   const combinedData = [...data, ...predictions];
   const currentDate = new Date().toISOString().split("T")[0];
@@ -73,6 +81,113 @@ export function TrendChart({
     }
   };
 
+  const getCreatorSignal = () => {
+    // Smart timing logic that considers both current trend and future outlook
+    if (futureOutlook === "explosive_growth") {
+      if (currentTrend === "rising") {
+        return {
+          signal: "Use Now!",
+          color: "text-green-600",
+          reasoning: "Perfect timing",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          signal: "Use Now",
+          color: "text-green-500",
+          reasoning: "Growth starting",
+        };
+      } else {
+        return {
+          signal: "Wait for Growth",
+          color: "text-orange-500",
+          reasoning: "Growth coming",
+        };
+      }
+    } else if (futureOutlook === "viral_potential") {
+      if (currentTrend === "rising") {
+        return {
+          signal: "Use Now!",
+          color: "text-green-600",
+          reasoning: "Viral momentum",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          signal: "Use Now",
+          color: "text-green-500",
+          reasoning: "Viral potential",
+        };
+      } else {
+        return {
+          signal: "Monitor",
+          color: "text-orange-500",
+          reasoning: "Potential but declining",
+        };
+      }
+    } else if (futureOutlook === "sustained_momentum") {
+      if (currentTrend === "declining") {
+        return {
+          signal: "Wait & Watch",
+          color: "text-orange-500",
+          reasoning: "Momentum coming",
+        };
+      } else {
+        return {
+          signal: "Use Now",
+          color: "text-green-500",
+          reasoning: "Steady growth",
+        };
+      }
+    } else if (futureOutlook === "comeback_likely") {
+      return {
+        signal: "Wait & Use",
+        color: "text-orange-500",
+        reasoning: "Comeback predicted",
+      };
+    } else if (futureOutlook === "stable_niche") {
+      return {
+        signal: "Safe Choice",
+        color: "text-blue-500",
+        reasoning: "Consistent performance",
+      };
+    } else if (futureOutlook === "steady_decline") {
+      if (currentTrend === "rising") {
+        return {
+          signal: "Use Soon",
+          color: "text-orange-600",
+          reasoning: "Act before decline",
+        };
+      } else {
+        return {
+          signal: "Consider Alt",
+          color: "text-red-500",
+          reasoning: "Declining trend",
+        };
+      }
+    } else {
+      // Fallback to current trend analysis
+      switch (currentTrend) {
+        case "rising":
+          return {
+            signal: "Use Now",
+            color: "text-green-500",
+            reasoning: "Currently trending",
+          };
+        case "declining":
+          return {
+            signal: "Wait",
+            color: "text-red-500",
+            reasoning: "Currently declining",
+          };
+        default:
+          return {
+            signal: "Safe",
+            color: "text-blue-500",
+            reasoning: "Stable choice",
+          };
+      }
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const isHistorical = new Date(label) <= new Date(currentDate);
@@ -105,11 +220,8 @@ export function TrendChart({
               {getTrendIcon()}
             </CardTitle>
             <CardDescription>
-              Music trend analysis using{" "}
-              {modelType === "SIS"
-                ? "Susceptible-Infected-Susceptible"
-                : "Susceptible-Exposed-Infected-Recovered"}{" "}
-              epidemiological model
+              Content creator intelligence: Track audience engagement patterns
+              and predict optimal timing for maximum viral potential
             </CardDescription>
           </div>
           <div className="text-right">
@@ -201,29 +313,30 @@ export function TrendChart({
 
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div className="text-center">
-            <p className="text-muted-foreground">Current Listeners</p>
+            <p className="text-muted-foreground">Active Audience</p>
             <p className="font-semibold text-lg text-blue-600">
               {formatNumber(data[data.length - 1]?.infected || 0)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-muted-foreground">Peak Listeners</p>
+            <p className="text-muted-foreground">Viral Peak</p>
             <p className="font-semibold text-lg">
               {formatNumber(peakListeners)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-muted-foreground">Market Potential</p>
+            <p className="text-muted-foreground">Total Reach</p>
             <p className="font-semibold text-lg text-slate-600">
               {formatNumber(data[0]?.totalPopulation || 0)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-muted-foreground">Trend Status</p>
-            <p
-              className={`font-semibold text-lg capitalize ${getTrendColor()}`}
-            >
-              {currentTrend}
+            <p className="text-muted-foreground">Creator Signal</p>
+            <p className={`font-semibold text-lg ${getCreatorSignal().color}`}>
+              {getCreatorSignal().signal}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {getCreatorSignal().reasoning}
             </p>
           </div>
         </div>

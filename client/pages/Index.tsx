@@ -30,6 +30,113 @@ export default function Index() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<"SIS" | "SEIR">("SIS");
 
+  // Helper function for consistent creator advice across components
+  const getCreatorAdvice = (currentTrend: string, futureOutlook: string) => {
+    // For explosive growth and viral potential, consider current trend timing
+    if (futureOutlook === "explosive_growth") {
+      if (currentTrend === "rising") {
+        return {
+          action: "Use Now!",
+          color: "text-green-700",
+          reasoning: "Perfect timing - explosive growth starting",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          action: "Use Now",
+          color: "text-green-600",
+          reasoning: "Explosive growth predicted",
+        };
+      } else {
+        return {
+          action: "Wait for Growth",
+          color: "text-orange-600",
+          reasoning: "Explosive growth coming - wait for upturn",
+        };
+      }
+    } else if (futureOutlook === "viral_potential") {
+      if (currentTrend === "rising") {
+        return {
+          action: "Use Now!",
+          color: "text-green-700",
+          reasoning: "Trending up with viral potential",
+        };
+      } else if (currentTrend === "stable") {
+        return {
+          action: "Use Now",
+          color: "text-green-600",
+          reasoning: "Viral potential detected",
+        };
+      } else {
+        return {
+          action: "Monitor Closely",
+          color: "text-orange-600",
+          reasoning: "Viral potential but declining now",
+        };
+      }
+    } else if (futureOutlook === "sustained_momentum") {
+      if (currentTrend === "declining") {
+        return {
+          action: "Wait & Watch",
+          color: "text-orange-600",
+          reasoning: "Momentum coming - wait for upturn",
+        };
+      } else {
+        return {
+          action: "Use Now",
+          color: "text-green-600",
+          reasoning: "Steady growth expected",
+        };
+      }
+    } else if (futureOutlook === "comeback_likely") {
+      return {
+        action: "Wait & Use",
+        color: "text-orange-600",
+        reasoning: "Comeback predicted soon",
+      };
+    } else if (futureOutlook === "stable_niche") {
+      return {
+        action: "Safe Choice",
+        color: "text-blue-700",
+        reasoning: "Consistent performance",
+      };
+    } else if (futureOutlook === "steady_decline") {
+      if (currentTrend === "rising") {
+        return {
+          action: "Use Soon",
+          color: "text-orange-700",
+          reasoning: "Act before decline",
+        };
+      } else {
+        return {
+          action: "Consider Alt",
+          color: "text-red-700",
+          reasoning: "Better options available",
+        };
+      }
+    } else {
+      return {
+        action: "Safe Choice",
+        color: "text-blue-700",
+        reasoning: "Stable option",
+      };
+    }
+  };
+
+  // Helper function to find upcoming peak from predictions
+  const getUpcomingPeak = (predictions: any[]) => {
+    let peakValue = 0;
+    let peakDate = "";
+
+    predictions.forEach((point) => {
+      if (point.infected > peakValue) {
+        peakValue = point.infected;
+        peakDate = point.date;
+      }
+    });
+
+    return { peakDate, peakValue };
+  };
+
   const handleTrackSelect = async (track: MusicTrack) => {
     setSelectedTrack(track);
     setIsAnalyzing(true);
@@ -121,8 +228,9 @@ export default function Index() {
             </div>
 
             <p className="text-xl md:text-2xl text-black mb-8 leading-relaxed">
-              Analyze the past, present, and future of music trends. Discover
-              any song's viral potential using advanced mathematical models.
+              Choose the perfect soundtrack for viral content. Discover which
+              songs will boost your engagement and reach using AI-powered trend
+              analysis.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4 mb-12">
@@ -131,21 +239,21 @@ export default function Index() {
                 className="text-sm py-2 px-4 border-music-purple/30"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
-                SEIR & SIS Models
+                Content Performance
               </Badge>
               <Badge
                 variant="outline"
                 className="text-sm py-2 px-4 border-music-blue/30"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
-                Trend Predictions
+                Viral Potential
               </Badge>
               <Badge
                 variant="outline"
                 className="text-sm py-2 px-4 border-music-pink/30"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Viral Analysis
+                Audience Insights
               </Badge>
             </div>
 
@@ -186,10 +294,10 @@ export default function Index() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-music-purple/10 mx-auto mb-4">
                     <Zap className="h-6 w-6 text-music-purple" />
                   </div>
-                  <h3 className="font-semibold mb-2">Mathematical Models</h3>
+                  <h3 className="font-semibold mb-2">Boost Your Content</h3>
                   <p className="text-sm text-muted-foreground">
-                    Advanced SIS and SEIR epidemiological models adapted for
-                    music trend analysis
+                    Choose songs that will maximize your content's reach and
+                    engagement across social platforms
                   </p>
                 </Card>
 
@@ -197,10 +305,10 @@ export default function Index() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-music-blue/10 mx-auto mb-4">
                     <TrendingUp className="h-6 w-6 text-music-blue" />
                   </div>
-                  <h3 className="font-semibold mb-2">Trend Predictions</h3>
+                  <h3 className="font-semibold mb-2">Viral Timing</h3>
                   <p className="text-sm text-muted-foreground">
-                    Forecast future popularity trends and identify viral
-                    potential
+                    Know when a song will peak to time your content perfectly
+                    for maximum viral potential
                   </p>
                 </Card>
 
@@ -208,9 +316,10 @@ export default function Index() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-music-pink/10 mx-auto mb-4">
                     <Globe className="h-6 w-6 text-music-pink" />
                   </div>
-                  <h3 className="font-semibold mb-2">Global Insights</h3>
+                  <h3 className="font-semibold mb-2">Creator Intelligence</h3>
                   <p className="text-sm text-muted-foreground">
-                    Understand audience behavior and market penetration patterns
+                    Get data-driven recommendations tailored for TikTok,
+                    Instagram, YouTube, and other platforms
                   </p>
                 </Card>
               </div>
@@ -278,91 +387,103 @@ export default function Index() {
                     </Button>
                   </div>
 
-                  {/* Analytics Grid */}
+                  {/* Creator Analytics Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Current Popularity */}
+                    {/* Content Boost Score */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          Current Popularity
+                          Content Boost Score
                         </span>
                       </div>
                       <div className="text-2xl font-bold text-slate-900">
                         {analysisData.track.popularity}%
                       </div>
+                      <div className="text-xs text-slate-500">
+                        Higher = Better for viral content
+                      </div>
                     </div>
 
-                    {/* All-Time Peak */}
+                    {/* Peak Viral Window */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          All-Time Peak
+                          Peak Viral Window
                         </span>
                       </div>
-                      <div className="text-2xl font-bold text-slate-900">
-                        {Math.round(
-                          analysisData.insights.peakListeners / 10000,
-                        )}
-                        %
+                      <div className="text-lg font-bold text-slate-900">
+                        {(() => {
+                          const upcomingPeak = getUpcomingPeak(
+                            analysisData.predictions,
+                          );
+                          return new Date(
+                            upcomingPeak.peakDate,
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        })()}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {new Date(
-                          analysisData.insights.peakDate,
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        Predicted peak engagement
                       </div>
                     </div>
 
-                    {/* Future Trend */}
+                    {/* Creator Recommendation */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Globe className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          Next Month
+                          Creator Advice
                         </span>
                       </div>
-                      <div className="text-lg font-bold capitalize">
-                        {analysisData.insights.currentTrend === "rising" ? (
-                          <span className="text-green-700">Rising</span>
-                        ) : analysisData.insights.currentTrend ===
-                          "declining" ? (
-                          <span className="text-red-700">Declining</span>
-                        ) : (
-                          <span className="text-yellow-700">Stable</span>
-                        )}
+                      <div className="text-sm font-bold">
+                        <span
+                          className={
+                            getCreatorAdvice(
+                              analysisData.insights.currentTrend,
+                              analysisData.insights.futureOutlook,
+                            ).color
+                          }
+                        >
+                          {
+                            getCreatorAdvice(
+                              analysisData.insights.currentTrend,
+                              analysisData.insights.futureOutlook,
+                            ).action
+                          }
+                        </span>
                       </div>
                       <div className="text-xs text-slate-500">
-                        {Math.floor(Math.random() * 20) + 75}% confidence
+                        {
+                          getCreatorAdvice(
+                            analysisData.insights.currentTrend,
+                            analysisData.insights.futureOutlook,
+                          ).reasoning
+                        }
                       </div>
                     </div>
-
-                    {/* Genres */}
+                    {/* Platform Match */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Music className="h-4 w-4 text-slate-600" />
                         <span className="text-sm font-medium text-slate-600">
-                          Genres
+                          Best Platform
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-1">
-                        {analysisData.track.genre &&
-                        analysisData.track.genre.length > 0 ? (
-                          analysisData.track.genre.slice(0, 2).map((genre) => (
-                            <Badge
-                              key={genre}
-                              variant="outline"
-                              className="text-xs bg-slate-50"
-                            >
-                              {genre}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-slate-500">N/A</span>
-                        )}
+                      <div className="text-sm font-bold">
+                        {analysisData.track.genre?.includes("Pop") ||
+                        analysisData.track.genre?.includes("Alternative")
+                          ? "TikTok + Instagram"
+                          : analysisData.track.genre?.includes("Hip-Hop") ||
+                              analysisData.track.genre?.includes("Rap")
+                            ? "TikTok + YouTube"
+                            : "Instagram + YouTube"}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Optimal for this genre
                       </div>
                     </div>
                   </div>
@@ -377,6 +498,7 @@ export default function Index() {
                 currentTrend={analysisData.insights.currentTrend}
                 peakDate={analysisData.insights.peakDate}
                 peakListeners={analysisData.insights.peakListeners}
+                futureOutlook={analysisData.insights.futureOutlook}
               />
 
               {/* Model Parameters and Insights */}
@@ -409,12 +531,11 @@ export default function Index() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-sm text-muted-foreground">
             <p className="mb-2">
-              TrendWave - Advanced music trend analysis using mathematical
-              epidemiological models
+              TrendWave - AI-powered music intelligence for content creators
             </p>
             <p>
-              Powered by SIS (Susceptible-Infected-Susceptible) and SEIR
-              (Susceptible-Exposed-Infected-Recovered) models
+              Make smarter song choices. Create viral content. Grow your
+              audience.
             </p>
           </div>
         </div>

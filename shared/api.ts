@@ -74,6 +74,14 @@ export interface TrendAnalysisResponse {
       | "viral_potential"
       | "steady_decline"
       | "comeback_likely"
-      | "stable_niche";
+      | "stable_niche"
+      | "explosive_growth"
+      | "sustained_momentum";
+    creatorRecommendation: {
+      action: "use_now" | "wait_and_see" | "safe_choice" | "avoid";
+      timing: "perfect" | "good" | "okay" | "poor";
+      platforms: string[];
+      confidence: number;
+    };
   };
 }

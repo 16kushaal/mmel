@@ -30,6 +30,73 @@ export default function Index() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<"SIS" | "SEIR">("SIS");
 
+  // Helper function for consistent creator advice across components
+  const getCreatorAdvice = (currentTrend: string, futureOutlook: string) => {
+    if (
+      futureOutlook === "explosive_growth" ||
+      futureOutlook === "viral_potential"
+    ) {
+      return {
+        action: "Use Now!",
+        color: "text-green-700",
+        reasoning: "High viral potential ahead",
+      };
+    } else if (futureOutlook === "sustained_momentum") {
+      return {
+        action: "Use Now",
+        color: "text-green-600",
+        reasoning: "Steady growth expected",
+      };
+    } else if (futureOutlook === "comeback_likely") {
+      return {
+        action: "Wait & Use",
+        color: "text-orange-600",
+        reasoning: "Comeback predicted soon",
+      };
+    } else if (futureOutlook === "stable_niche") {
+      return {
+        action: "Safe Choice",
+        color: "text-blue-700",
+        reasoning: "Consistent performance",
+      };
+    } else if (futureOutlook === "steady_decline") {
+      if (currentTrend === "rising") {
+        return {
+          action: "Use Soon",
+          color: "text-orange-700",
+          reasoning: "Act before decline",
+        };
+      } else {
+        return {
+          action: "Consider Alt",
+          color: "text-red-700",
+          reasoning: "Better options available",
+        };
+      }
+    } else {
+      return {
+        action: "Safe Choice",
+        color: "text-blue-700",
+        reasoning: "Stable option",
+      };
+    }
+  };
+
+  // Helper function to find upcoming peak from predictions
+  const getUpcomingPeak = (predictions: any[]) => {
+    let peakValue = 0;
+    let peakDate = "";
+
+    predictions.forEach((point) => {
+      if (point.infected > peakValue) {
+        peakValue = point.infected;
+        peakDate = point.date;
+      }
+    });
+
+    return { peakDate, peakValue };
+  };
+
   const handleTrackSelect = async (track: MusicTrack) => {
     setSelectedTrack(track);
     setIsAnalyzing(true);

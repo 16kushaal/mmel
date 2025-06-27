@@ -687,31 +687,54 @@ export const handleTrendAnalysis: RequestHandler = async (req, res) => {
       });
     }
 
-    // Apply smoothing to prevent extreme day-to-day jumps
+    // Enhanced smoothing that preserves intentional patterns while preventing unrealistic jumps
     for (let i = 1; i < predictions.length; i++) {
       const prev = predictions[i - 1].infected;
       const curr = predictions[i].infected;
-      const maxChange = prev * 0.18; // Maximum 18% change per day (reduced from 40%)
 
+      // Dynamic max change based on current trend and scenario
+      let maxChangePercent = 0.25; // Base 25% max change
+
+      // Allow larger changes for viral scenarios
+      if (
+        selectedScenario.includes("viral") ||
+        selectedScenario.includes("surge")
+      ) {
+        maxChangePercent = 0.4; // 40% for viral content
+      } else if (
+        selectedScenario.includes("growth") ||
+        selectedScenario.includes("boost")
+      ) {
+        maxChangePercent = 0.3; // 30% for growth scenarios
+      }
+
+      const maxChange = prev * maxChangePercent;
+
+      // Only limit extremely unrealistic jumps
       if (Math.abs(curr - prev) > maxChange) {
-        if (curr > prev) {
-          predictions[i].infected = Math.round(prev + maxChange);
-        } else {
-          predictions[i].infected = Math.round(prev - maxChange);
-        }
+        // Preserve direction but limit magnitude
+        const direction = curr > prev ? 1 : -1;
+        predictions[i].infected = Math.round(prev + maxChange * direction);
       }
     }
 
-    // Add gentle smoothing to reduce excessive spikes while preserving character
+    // Preserve pattern integrity - only smooth extreme outliers
     for (let i = 2; i < predictions.length - 1; i++) {
       const prev = predictions[i - 1].infected;
       const curr = predictions[i].infected;
       const next = predictions[i + 1].infected;
-      const average = (prev + curr + next) / 3;
 
-      // Only smooth if current value is an extreme outlier
-      if (Math.abs(curr - average) > average * 0.25) {
-        predictions[i].infected = Math.round(curr * 0.7 + average * 0.3);
+      // Calculate local trend
+      const localTrend = (next - prev) / 2;
+      const expectedValue = prev + localTrend;
+
+      // Only smooth if the current value is a severe outlier (>50% off expected)
+      if (
+        Math.abs(curr - expectedValue) > expectedValue * 0.5 &&
+        expectedValue > 0
+      ) {
+        // Light smoothing that preserves 80% of original character
+        predictions[i].infected = Math.round(curr * 0.8 + expectedValue * 0.2);
       }
     }
 

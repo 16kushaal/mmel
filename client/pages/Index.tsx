@@ -394,25 +394,32 @@ export default function Index() {
                           Creator Advice
                         </span>
                       </div>
-                      <div className="text-sm font-bold capitalize">
-                        {analysisData.insights.currentTrend === "rising" ? (
-                          <span className="text-green-700">Use Now!</span>
-                        ) : analysisData.insights.currentTrend ===
-                          "declining" ? (
-                          <span className="text-orange-700">Wait & See</span>
-                        ) : (
-                          <span className="text-blue-700">Safe Choice</span>
-                        )}
+                      <div className="text-sm font-bold">
+                        <span
+                          className={
+                            getCreatorAdvice(
+                              analysisData.insights.currentTrend,
+                              analysisData.insights.futureOutlook,
+                            ).color
+                          }
+                        >
+                          {
+                            getCreatorAdvice(
+                              analysisData.insights.currentTrend,
+                              analysisData.insights.futureOutlook,
+                            ).action
+                          }
+                        </span>
                       </div>
                       <div className="text-xs text-slate-500">
-                        {analysisData.insights.currentTrend === "rising"
-                          ? "Trending up - perfect timing"
-                          : analysisData.insights.currentTrend === "declining"
-                            ? "Consider alternatives"
-                            : "Consistent performance"}
+                        {
+                          getCreatorAdvice(
+                            analysisData.insights.currentTrend,
+                            analysisData.insights.futureOutlook,
+                          ).reasoning
+                        }
                       </div>
                     </div>
-
                     {/* Platform Match */}
                     <div className="bg-white rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-2">

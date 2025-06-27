@@ -331,6 +331,7 @@ function analyzeInsights(
   data: TrendDataPoint[],
   predictions: TrendDataPoint[],
   modelType: "SIS" | "SEIR",
+  track?: MusicTrack,
 ) {
   const allData = [...data, ...predictions];
 
